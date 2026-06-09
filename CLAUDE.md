@@ -75,7 +75,9 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
 - [x] Slice 5 — Moon Phases Overlay
 - [x] Slice 6 — Nursery Map
   - Seed: `python scripts/seed_nurseries.py` (adds 3 verified test nurseries)
-- [ ] Slice 7 — B2B Registration + Admin
+- [x] Slice 7 — B2B Registration + Admin
+  - Migration: `backend/migrations/002_add_admin.sql` — run in Supabase SQL Editor
+  - Set admin: `UPDATE user_profiles SET is_admin = true WHERE id = '<your-user-id>';`
 - [ ] Slice 8 — GDD Cron + Weather
 - [ ] Slice 9 — Freemium + WayForPay
 - [ ] Slice 10 — Email Alerts (SendPulse)
