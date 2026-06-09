@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
+import { getMonthMoonDays, type LunarFavor, type MoonDay } from '../lib/moonPhase'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -43,6 +44,7 @@ const LABEL_W  = 80   // px for month label
 const TASK_H   = 22   // px task bar height
 const TASK_GAP = 2    // px gap between bars
 const TOP_PAD  = 4    // px top padding in row
+const MOON_H   = 16   // px moon strip height
 
 const MONTHS_SHORT = ['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру']
 const MONTHS_FULL  = ['Січень','Лютий','Березень','Квітень','Травень','Червень',
@@ -154,6 +156,8 @@ export default function CalendarPage() {
   const [hiddenTypes,  setHiddenTypes]  = useState<Set<TaskType>>(new Set())
   const [cropOffsets,  setCropOffsets]  = useState<Record<string, number>>({})
   const [sidebarOpen,  setSidebarOpen]  = useState(true)
+  const [showMoon,     setShowMoon]     = useState(false)
+  const [moonData,     setMoonData]     = useState<MoonDay[][]>([])
   const [liveOff,      setLiveOff]      = useState<{ id: string; delta: number } | null>(null)
 
   const dragRef    = useRef<{ id: string; startX: number; base: number } | null>(null)
@@ -165,6 +169,10 @@ export default function CalendarPage() {
       .catch(e => setError(e?.response?.data?.detail ?? 'Помилка завантаження'))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    setMoonData(Array.from({ length: 12 }, (_, m) => getMonthMoonDays(year, m)))
+  }, [year])
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -200,6 +208,9 @@ export default function CalendarPage() {
   }
 
   const visible = windows.filter(w => !search || w.crop_name.toLowerCase().includes(search.toLowerCase()))
+  const lunarMap: Record<string, LunarFavor | null> = Object.fromEntries(
+    windows.map(w => [w.crop_id, w.lunar_preference as LunarFavor | null])
+  )
 
   /* ── Early returns ────────────────────────────────────────────────────── */
   if (loading) return (
@@ -301,6 +312,32 @@ export default function CalendarPage() {
           </div>
           <span className="text-xs text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1">12 місяців</span>
 
+          <button
+            onClick={() => setShowMoon(v => !v)}
+            className={`px-3 py-1 text-xs font-semibold border rounded-lg transition-colors ${
+              showMoon ? 'border-forest bg-forest text-white' : 'border-gray-300 hover:bg-gray-50 text-gray-600'
+            }`}
+          >
+            🌙 Місяць
+          </button>
+
+          {showMoon && (
+            <div className="flex items-center gap-3 text-xs text-gray-500 border-l border-gray-200 pl-3">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full inline-block bg-green-400/70" />
+                Наземні
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: 'rgba(120,53,15,0.5)' }} />
+                Підземні
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full inline-block bg-gray-200" />
+                Відпочинок
+              </span>
+            </div>
+          )}
+
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-gray-400 hidden sm:block">✋ Тягніть смугу для зміщення дат</span>
             {Object.keys(cropOffsets).length > 0 && (
@@ -347,9 +384,11 @@ export default function CalendarPage() {
                 buildSegments(tasks, w.crop_id, w.crop_name, year, month, hiddenTypes)
                   .forEach(s => rawSegs.push(s))
               })
-              const segs  = assignLanes(rawSegs)
-              const lanes = segs.length > 0 ? Math.max(...segs.map(s => s.lane)) + 1 : 0
-              const rowH  = Math.max(40, TOP_PAD * 2 + lanes * (TASK_H + TASK_GAP))
+              const segs    = assignLanes(rawSegs)
+              const lanes   = segs.length > 0 ? Math.max(...segs.map(s => s.lane)) + 1 : 0
+              const moonOff = showMoon ? MOON_H : 0
+              const rowH    = Math.max(40, TOP_PAD * 2 + moonOff + lanes * (TASK_H + TASK_GAP))
+              const monthMoon = moonData[month] ?? []
 
               return (
                 <div key={month} className={`flex border-b ${isCurrent ? 'border-forest/30' : 'border-gray-100'}`}
@@ -387,6 +426,36 @@ export default function CalendarPage() {
                       })}
                     </div>
 
+                    {/* Moon strip */}
+                    {showMoon && (
+                      <div className="absolute inset-x-0 top-0 flex pointer-events-none" style={{ height: MOON_H }}>
+                        {Array.from({ length: 31 }, (_, i) => {
+                          const md = monthMoon[i]
+                          if (!md) return <div key={i} style={{ width: DAY_W }} className="h-full" />
+                          const bg = md.favor === 'above_ground' ? 'rgba(34,197,94,0.13)'
+                                   : md.favor === 'below_ground' ? 'rgba(120,53,15,0.09)'
+                                   : 'transparent'
+                          return (
+                            <div key={i} style={{ width: DAY_W, backgroundColor: bg }}
+                              className="h-full flex items-center justify-center pointer-events-auto cursor-default"
+                              title={`${i + 1}: ${md.icon} ${md.nameUk}`}
+                            >
+                              {md.isMajor
+                                ? <span style={{ fontSize: 9, lineHeight: 1 }}>{md.icon}</span>
+                                : <span style={{
+                                    width: 5, height: 5, borderRadius: '50%', display: 'block',
+                                    backgroundColor:
+                                      md.favor === 'above_ground' ? 'rgba(34,197,94,0.55)'
+                                      : md.favor === 'below_ground' ? 'rgba(120,53,15,0.35)'
+                                      : 'rgba(0,0,0,0.08)',
+                                  }} />
+                              }
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
                     {/* Today vertical line */}
                     {isCurrent && (
                       <div className="absolute top-0 h-full w-px bg-red-400/70 z-10 pointer-events-none"
@@ -398,7 +467,7 @@ export default function CalendarPage() {
                       const cfg      = TASK_CFG[seg.task.type]
                       const left     = (seg.startDay - 1) * DAY_W
                       const width    = Math.max((seg.endDay - seg.startDay + 1) * DAY_W - 1, DAY_W - 1)
-                      const top      = TOP_PAD + seg.lane * (TASK_H + TASK_GAP)
+                      const top      = TOP_PAD + moonOff + seg.lane * (TASK_H + TASK_GAP)
                       const dragging = dragRef.current?.id === seg.cropId
 
                       const radius = seg.isFirst && seg.isLast ? '4px'
@@ -406,12 +475,18 @@ export default function CalendarPage() {
                         : seg.isLast  ? '0 4px 4px 0'
                         : '0'
 
+                      // Lunar glow: check moon phase at midpoint day of this segment
+                      const midIdx = Math.floor((seg.startDay + seg.endDay) / 2) - 1
+                      const midMoon = showMoon ? monthMoon[midIdx] : undefined
+                      const pref = lunarMap[seg.cropId]
+                      const lunarMatch = midMoon && pref && pref !== 'any' && midMoon.favor === pref
+
                       return (
                         <div key={seg.task.id + '-' + month}
                           onMouseDown={e => startDrag(e, seg.cropId)}
-                          title={`${seg.cropName}: ${cfg.label}\n${seg.task.start.toLocaleDateString('uk-UA')} – ${seg.task.end.toLocaleDateString('uk-UA')}`}
+                          title={`${seg.cropName}: ${cfg.label}\n${seg.task.start.toLocaleDateString('uk-UA')} – ${seg.task.end.toLocaleDateString('uk-UA')}${lunarMatch ? `\n${midMoon?.icon} Сприятливий місячний день` : ''}`}
                           className={`absolute flex items-center gap-1 px-1.5 text-xs font-medium overflow-hidden z-10 ${dragging ? 'opacity-70 cursor-grabbing' : 'cursor-grab hover:brightness-95'}`}
-                          style={{ left, width, top, height: TASK_H, borderRadius: radius, backgroundColor: cfg.bg, color: cfg.fg }}
+                          style={{ left, width, top, height: TASK_H, borderRadius: radius, backgroundColor: cfg.bg, color: cfg.fg, boxShadow: lunarMatch ? '0 0 0 2px rgba(34,197,94,0.75)' : undefined }}
                         >
                           <span className="shrink-0 leading-none">{cfg.icon}</span>
                           {width > 60 && <span className="truncate leading-none">{seg.cropName} – {cfg.label}</span>}
