@@ -37,6 +37,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [regions, setRegions] = useState<Region[]>([])
   const [crops, setCrops] = useState<Crop[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+  const [fetchError, setFetchError] = useState('')
   const [regionId, setRegionId] = useState('')
   const [regionSearch, setRegionSearch] = useState('')
   const [plotType, setPlotType] = useState('')
@@ -46,8 +48,16 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.get<Region[]>('/api/regions').then((r) => setRegions(r.data))
-    api.get<Crop[]>('/api/crops').then((r) => setCrops(r.data))
+    Promise.all([
+      api.get<Region[]>('/api/regions'),
+      api.get<Crop[]>('/api/crops'),
+    ])
+      .then(([rr, cr]) => {
+        setRegions(rr.data)
+        setCrops(cr.data)
+      })
+      .catch(() => setFetchError('Не вдалось завантажити дані. Перевірте, що сервер запущено (uvicorn main:app --reload).'))
+      .finally(() => setLoadingData(false))
   }, [])
 
   const filteredRegions = regions.filter((r) =>
@@ -131,22 +141,42 @@ export default function OnboardingPage() {
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-forest text-sm mb-4"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
-              {filteredRegions.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setRegionId(r.id)}
-                  className={`text-left px-4 py-3 rounded-xl border-2 transition-colors ${
-                    regionId === r.id
-                      ? 'border-forest bg-forest/5 text-forest'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-semibold text-sm">{r.region}</div>
-                  <div className="text-xs text-gray-400">{r.city}</div>
-                </button>
-              ))}
-            </div>
+            {fetchError && (
+              <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm mb-4">
+                {fetchError}
+              </div>
+            )}
+
+            {loadingData ? (
+              <div className="flex justify-center py-12">
+                <div className="w-7 h-7 border-4 border-forest border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : regions.length === 0 ? (
+              <div className="py-10 text-center text-gray-400 text-sm">
+                Регіони не знайдено. Запустіть скрипт seed_climate_zones.py у backend/.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                {filteredRegions.length === 0 ? (
+                  <div className="col-span-2 py-6 text-center text-gray-400 text-sm">
+                    Нічого не знайдено — спробуйте іншу назву
+                  </div>
+                ) : filteredRegions.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setRegionId(r.id)}
+                    className={`text-left px-4 py-3 rounded-xl border-2 transition-colors ${
+                      regionId === r.id
+                        ? 'border-forest bg-forest/5 text-forest'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm">{r.region}</div>
+                    <div className="text-xs text-gray-400">{r.city}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -249,7 +279,7 @@ export default function OnboardingPage() {
           {step < 2 ? (
             <button
               onClick={() => setStep(step + 1)}
-              disabled={step === 0 ? !regionId : !plotType}
+              disabled={step === 0 ? (!regionId || loadingData) : !plotType}
               className="px-6 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-40"
             >
               Далі
