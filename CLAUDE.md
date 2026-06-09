@@ -69,11 +69,12 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
   - Migration: `backend/migrations/001_initial.sql` — run manually in Supabase SQL Editor
   - Seeds: `python scripts/seed_climate_zones.py && python scripts/seed_crops.py`
   - Homepage UI matches design mockups
-- [ ] Slice 2 — Auth (Register / Login)
-- [ ] Slice 3 — Onboarding Quiz
-- [ ] Slice 4 — Planting Calendar (Algorithm Core)
-- [ ] Slice 5 — Moon Phases Overlay
-- [ ] Slice 6 — Nursery Map
+- [x] Slice 2 — Auth (Register / Login)
+- [x] Slice 3 — Onboarding Quiz
+- [x] Slice 4 — Planting Calendar (Algorithm Core)
+- [x] Slice 5 — Moon Phases Overlay
+- [x] Slice 6 — Nursery Map
+  - Seed: `python scripts/seed_nurseries.py` (adds 3 verified test nurseries)
 - [ ] Slice 7 — B2B Registration + Admin
 - [ ] Slice 8 — GDD Cron + Weather
 - [ ] Slice 9 — Freemium + WayForPay

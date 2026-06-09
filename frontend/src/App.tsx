@@ -9,6 +9,7 @@ import OnboardingPage from './pages/OnboardingPage'
 import DashboardPage from './pages/DashboardPage'
 import CalendarPage from './pages/CalendarPage'
 import AddCropPage from './pages/AddCropPage'
+import MapPage from './pages/MapPage'
 
 export default function App() {
   return (
@@ -31,7 +32,8 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/crops/add" element={<AddCropPage />} />
-            {/* Slices 5-11 add routes here */}
+            <Route path="/map" element={<MapPage />} />
+            {/* Slices 7-11 add routes here */}
           </Route>
         </Route>
       </Routes>
