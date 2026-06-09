@@ -1,14 +1,9 @@
-from functools import lru_cache
 from fastapi import APIRouter
-from supabase import create_client, Client
-from core.config import settings
+from app.deps import get_supabase
+from app.users import router as users_router
 
 router = APIRouter()
-
-
-@lru_cache(maxsize=1)
-def get_supabase() -> Client:
-    return create_client(settings.supabase_url, settings.supabase_service_key)
+router.include_router(users_router)
 
 
 @router.get("/health")
