@@ -14,8 +14,8 @@ sb = create_client(settings.supabase_url, settings.supabase_service_key)
 
 # Look up region IDs
 def region_id(city: str) -> str | None:
-    r = sb.table("climate_zones").select("id").eq("city", city).maybe_single().execute()
-    return r.data["id"] if r.data else None
+    r = sb.table("climate_zones").select("id").eq("city", city).limit(1).execute()
+    return r.data[0]["id"] if r.data else None
 
 kyiv_id    = region_id("Київ")
 lviv_id    = region_id("Львів")
