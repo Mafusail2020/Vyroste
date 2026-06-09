@@ -32,6 +32,12 @@ const CROP_TYPE_ICONS: Record<string, string> = {
 
 const STEP_LABELS = ['Регіон', 'Тип ділянки', 'Культури']
 
+interface Profile {
+  region_id: string | null
+  plot_type: string | null
+  selected_crops: string[] | null
+}
+
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
@@ -51,10 +57,20 @@ export default function OnboardingPage() {
     Promise.all([
       api.get<Region[]>('/api/regions'),
       api.get<Crop[]>('/api/crops'),
+      api.get<Profile>('/api/users/me').catch(() => ({ data: null })),
     ])
-      .then(([rr, cr]) => {
+      .then(([rr, cr, pr]) => {
         setRegions(rr.data)
         setCrops(cr.data)
+
+        const profile = pr.data
+        if (profile) {
+          if (profile.region_id)    setRegionId(profile.region_id)
+          if (profile.plot_type)    setPlotType(profile.plot_type)
+          if (profile.selected_crops?.length) setSelectedCrops(new Set(profile.selected_crops))
+          // Skip to crops step if region + plot type already configured
+          if (profile.region_id && profile.plot_type) setStep(2)
+        }
       })
       .catch(() => setFetchError('Не вдалось завантажити дані. Перевірте, що сервер запущено (uvicorn main:app --reload).'))
       .finally(() => setLoadingData(false))
