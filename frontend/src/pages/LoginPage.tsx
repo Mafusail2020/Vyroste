@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import api from '../lib/api'
 import Logo from '../components/Logo'
 
 export default function LoginPage() {
@@ -17,7 +18,12 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signIn(email, password)
-      navigate('/')
+      try {
+        const { data } = await api.get<{ region_id: string | null }>('/api/users/me')
+        navigate(data.region_id ? '/dashboard' : '/onboarding')
+      } catch {
+        navigate('/dashboard')
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Помилка входу')
     } finally {
