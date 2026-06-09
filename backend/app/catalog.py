@@ -36,13 +36,11 @@ async def save_onboarding(
     user_id = current_user["id"]
     sb = get_supabase()
 
-    result = sb.table("user_profiles").update({
+    result = sb.table("user_profiles").upsert({
+        "id": user_id,
         "region_id": body.region_id,
         "plot_type": body.plot_type,
         "selected_crops": body.selected_crops,
-    }).eq("id", user_id).execute()
-
-    if not result.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    }).execute()
 
     return result.data[0]

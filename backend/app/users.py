@@ -44,6 +44,7 @@ async def me(current_user: dict = Depends(get_current_user)):
 
     result = sb.table("user_profiles").select("*").eq("id", user_id).maybe_single().execute()
     if not result.data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+        created = sb.table("user_profiles").upsert({"id": user_id}).execute()
+        return created.data[0] if created.data else {"id": user_id}
 
     return result.data
