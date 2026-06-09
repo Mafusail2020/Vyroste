@@ -1,5 +1,6 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, Link } from 'react-router-dom'
 import Logo from './Logo'
+import { useAuth } from '../contexts/AuthContext'
 
 const NAV_LINKS = [
   { to: '/calendar', label: 'Регіональний календар' },
@@ -11,6 +12,8 @@ const NAV_LINKS = [
 ]
 
 export default function Layout() {
+  const { user, signOut } = useAuth()
+
   return (
     <div className="min-h-screen flex flex-col bg-cream">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -35,6 +38,30 @@ export default function Layout() {
                 {label}
               </NavLink>
             ))}
+
+            {user ? (
+              <button
+                onClick={() => signOut()}
+                className="text-sm text-gray-600 hover:text-forest transition-colors"
+              >
+                Вийти
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 ml-2">
+                <Link
+                  to="/login"
+                  className="text-sm text-gray-600 hover:text-forest transition-colors"
+                >
+                  Увійти
+                </Link>
+                <Link
+                  to="/register"
+                  className="text-sm px-4 py-2 rounded-xl bg-forest text-white font-semibold hover:bg-forest-dark transition-colors"
+                >
+                  Реєстрація
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
       </header>
