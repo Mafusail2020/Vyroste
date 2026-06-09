@@ -5,6 +5,7 @@ from app.catalog import router as catalog_router
 from app.calendar import router as calendar_router
 from app.nurseries import router as nurseries_router
 from app.admin import router as admin_router
+from app.gdd import router as gdd_router
 
 router = APIRouter()
 router.include_router(users_router)
@@ -12,6 +13,7 @@ router.include_router(catalog_router)
 router.include_router(calendar_router)
 router.include_router(nurseries_router)
 router.include_router(admin_router)
+router.include_router(gdd_router)
 
 
 @router.get("/health")

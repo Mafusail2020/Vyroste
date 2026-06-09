@@ -11,6 +11,20 @@ interface Profile {
   is_premium: boolean
 }
 
+interface GddCrop {
+  crop_id: string
+  crop_name: string
+  gdd_accumulated: number
+  gdd_to_harvest: number
+  pct: number
+}
+
+interface GddData {
+  region_id: string | null
+  season_start: string | null
+  crops: GddCrop[]
+}
+
 const PLOT_LABELS: Record<string, string> = {
   balcony: 'Балкон 🪴',
   dacha:   'Дача 🏡',
@@ -20,13 +34,17 @@ const PLOT_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const { user } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [gdd,     setGdd]     = useState<GddData | null>(null)
 
   useEffect(() => {
     api.get<Profile>('/api/users/me').then((r) => setProfile(r.data)).catch(() => {})
+    api.get<GddData>('/api/gdd/me').then((r) => setGdd(r.data)).catch(() => {})
   }, [])
 
   const needsOnboarding = profile && (!profile.region_id || !profile.plot_type)
-  const cropCount = profile?.selected_crops?.length ?? 0
+  const cropCount       = profile?.selected_crops?.length ?? 0
+  const gddCrops        = (gdd?.crops ?? []).filter(c => c.gdd_to_harvest > 0)
+  const gddHasData      = gddCrops.some(c => c.gdd_accumulated > 0)
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
@@ -50,6 +68,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <div className="bg-white rounded-2xl p-6 border border-gray-100">
           <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">Тип ділянки</div>
@@ -69,7 +88,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Quick links */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
         <Link
           to="/calendar"
           className="group bg-card-green rounded-2xl p-6 hover:shadow-md transition-shadow"
@@ -87,6 +107,45 @@ export default function DashboardPage() {
           <div className="text-xs text-gray-500">Знайдіть розсадники поблизу</div>
         </Link>
       </div>
+
+      {/* GDD real progress — only when there's actual accumulated data */}
+      {gddHasData && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="font-black text-sm uppercase tracking-wide text-gray-700">🌡️ Реальний прогрес GDD</h2>
+            {gdd?.season_start && (
+              <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                з {new Date(gdd.season_start).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {gddCrops.map(c => (
+              <div key={c.crop_id} className="bg-white rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-800 truncate">{c.crop_name}</span>
+                  <span className={`text-xs font-bold ml-2 shrink-0 ${c.pct >= 1 ? 'text-orange-500' : 'text-forest'}`}>
+                    {Math.round(c.pct * 100)}%
+                  </span>
+                </div>
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${c.pct >= 1 ? 'bg-orange-400' : 'bg-forest'}`}
+                    style={{ width: `${Math.min(c.pct * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="mt-1.5 flex justify-between text-xs text-gray-400">
+                  <span>{c.gdd_accumulated} GDD</span>
+                  <span>ціль {c.gdd_to_harvest} GDD</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-300 mt-3">
+            Дані оновлюються щодня о 08:00 UTC з Open-Meteo
+          </p>
+        </div>
+      )}
     </div>
   )
 }

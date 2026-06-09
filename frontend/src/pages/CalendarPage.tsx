@@ -158,6 +158,7 @@ export default function CalendarPage() {
   const [sidebarOpen,  setSidebarOpen]  = useState(true)
   const [showMoon,     setShowMoon]     = useState(false)
   const [moonData,     setMoonData]     = useState<MoonDay[][]>([])
+  const [gddMap,       setGddMap]       = useState<Record<string, number>>({})
   const [liveOff,      setLiveOff]      = useState<{ id: string; delta: number } | null>(null)
 
   const dragRef    = useRef<{ id: string; startX: number; base: number } | null>(null)
@@ -168,6 +169,13 @@ export default function CalendarPage() {
       .then(r => setWindows(r.data))
       .catch(e => setError(e?.response?.data?.detail ?? 'Помилка завантаження'))
       .finally(() => setLoading(false))
+    api.get<{ crops: { crop_id: string; pct: number }[] }>('/api/gdd/me')
+      .then(r => {
+        const m: Record<string, number> = {}
+        for (const c of r.data.crops) m[c.crop_id] = c.pct
+        setGddMap(m)
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -490,6 +498,11 @@ export default function CalendarPage() {
                         >
                           <span className="shrink-0 leading-none">{cfg.icon}</span>
                           {width > 60 && <span className="truncate leading-none">{seg.cropName} – {cfg.label}</span>}
+                          {seg.task.type === 'harvesting' && gddMap[seg.cropId] !== undefined && width > 90 && (
+                            <span className="ml-auto shrink-0 text-xs font-bold opacity-90 leading-none">
+                              {Math.round(gddMap[seg.cropId] * 100)}%
+                            </span>
+                          )}
                         </div>
                       )
                     })}

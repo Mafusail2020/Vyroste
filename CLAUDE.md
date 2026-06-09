@@ -78,7 +78,8 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
 - [x] Slice 7 — B2B Registration + Admin
   - Migration: `backend/migrations/002_add_admin.sql` — run in Supabase SQL Editor
   - Set admin: `UPDATE user_profiles SET is_admin = true WHERE id = '<your-user-id>';`
-- [ ] Slice 8 — GDD Cron + Weather
+- [x] Slice 8 — GDD Cron + Weather
+  - Manual trigger (for testing): POST /api/gdd/run (requires auth)
 - [ ] Slice 9 — Freemium + WayForPay
 - [ ] Slice 10 — Email Alerts (SendPulse)
 - [ ] Slice 11 — Polish
