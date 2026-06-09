@@ -37,6 +37,29 @@ async def register(body: RegisterRequest):
     return {"id": user.id, "email": user.email}
 
 
+@router.post("/me/crops/{crop_id}", status_code=status.HTTP_200_OK)
+async def add_crop(crop_id: str, current_user: dict = Depends(get_current_user)):
+    sb = get_supabase()
+    user_id = current_user["id"]
+    profile = sb.table("user_profiles").select("selected_crops").eq("id", user_id).maybe_single().execute()
+    existing: list[str] = (profile.data or {}).get("selected_crops") or []
+    if crop_id not in existing:
+        existing = [*existing, crop_id]
+    sb.table("user_profiles").upsert({"id": user_id, "selected_crops": existing}).execute()
+    return {"selected_crops": existing}
+
+
+@router.delete("/me/crops/{crop_id}", status_code=status.HTTP_200_OK)
+async def remove_crop(crop_id: str, current_user: dict = Depends(get_current_user)):
+    sb = get_supabase()
+    user_id = current_user["id"]
+    profile = sb.table("user_profiles").select("selected_crops").eq("id", user_id).maybe_single().execute()
+    existing: list[str] = (profile.data or {}).get("selected_crops") or []
+    updated = [c for c in existing if c != crop_id]
+    sb.table("user_profiles").upsert({"id": user_id, "selected_crops": updated}).execute()
+    return {"selected_crops": updated}
+
+
 @router.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
     sb = get_supabase()

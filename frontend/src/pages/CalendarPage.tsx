@@ -260,7 +260,7 @@ export default function CalendarPage() {
                   {w.lunar_preference === 'below_ground' && <span className="ml-auto text-gray-400">🌘</span>}
                 </button>
               ))}
-              <Link to="/onboarding" className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-forest hover:bg-forest/5 rounded-lg">
+              <Link to="/crops/add" className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-forest hover:bg-forest/5 rounded-lg">
                 <span className="font-bold text-lg leading-none">+</span>
                 <span>Додати культуру</span>
               </Link>
