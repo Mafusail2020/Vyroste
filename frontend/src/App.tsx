@@ -15,6 +15,7 @@ import PricingPage from './pages/PricingPage'
 import PaymentSuccessPage from './pages/PaymentSuccessPage'
 import NurseryRegisterPage from './pages/NurseryRegisterPage'
 import AdminPage from './pages/AdminPage'
+import ContactPage from './pages/ContactPage'
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         {/* Marketing + app pages — inside Layout shell */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
