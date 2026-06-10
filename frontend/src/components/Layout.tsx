@@ -1,5 +1,6 @@
 import { Outlet, NavLink, Link } from 'react-router-dom'
 import Logo from './Logo'
+import ErrorBoundary from './ErrorBoundary'
 import { useAuth } from '../contexts/AuthContext'
 
 const NAV_LINKS = [
@@ -67,7 +68,9 @@ export default function Layout() {
       </header>
 
       <main className="flex-1">
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import api from '../lib/api'
 
 interface Nursery {
@@ -42,6 +43,9 @@ export default function AdminPage() {
     try {
       await api.patch(`/api/admin/nurseries/${id}/status`, { status })
       setNurseries(prev => prev.filter(n => n.id !== id))
+      toast.success(status === 'verified' ? 'Розсадник верифіковано' : 'Розсадник відхилено')
+    } catch {
+      toast.error('Помилка. Спробуйте ще раз.')
     } finally {
       setActing(null)
     }

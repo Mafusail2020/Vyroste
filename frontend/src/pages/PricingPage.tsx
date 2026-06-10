@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
 
@@ -23,15 +24,12 @@ export default function PricingPage() {
   const { user } = useAuth()
   const navigate  = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
 
   async function handleCheckout() {
     if (!user) { navigate('/login'); return }
     setLoading(true)
-    setError('')
     try {
       const { data } = await api.post<{ form_url: string; fields: Record<string, string> }>('/api/payments/checkout')
-      // Create and auto-submit POST form to WayForPay
       const form = document.createElement('form')
       form.method = 'POST'
       form.action = data.form_url
@@ -46,12 +44,8 @@ export default function PricingPage() {
       document.body.appendChild(form)
       form.submit()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : ''
-      if (msg.includes('503') || (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail) {
-        setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Платіжний шлюз не налаштовано')
-      } else {
-        setError('Помилка. Спробуйте ще раз.')
-      }
+      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      toast.error(detail ?? 'Помилка. Спробуйте ще раз.')
       setLoading(false)
     }
   }
@@ -108,10 +102,6 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
-
-          {error && (
-            <p className="text-amber-200 text-xs mb-3">{error}</p>
-          )}
 
           <button
             onClick={handleCheckout}

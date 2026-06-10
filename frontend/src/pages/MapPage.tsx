@@ -125,8 +125,15 @@ export default function MapPage() {
   }
 
   if (loading) return (
-    <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-      <div className="w-8 h-8 border-4 border-forest border-t-transparent rounded-full animate-spin" />
+    <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
+      <aside className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 p-4 gap-3">
+        <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-3/4" />
+        <div className="animate-pulse bg-gray-200 rounded-lg h-10 w-full" />
+        {[0, 1, 2].map(i => (
+          <div key={i} className="animate-pulse bg-gray-200 rounded-xl h-24 w-full" />
+        ))}
+      </aside>
+      <div className="flex-1 animate-pulse bg-gray-100" />
     </div>
   )
 

@@ -8,7 +8,15 @@ from app.api import router
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     from app.scheduler import scheduler
+    from app.deps import get_supabase
     scheduler.start()
+    try:
+        sb = get_supabase()
+        result = sb.table("climate_zones").select("id", count="exact").limit(1).execute()
+        count = result.count or 0
+        print(f"[startup] Supabase OK — {count} climate zones")
+    except Exception as exc:
+        print(f"[startup] WARNING: Supabase connection failed — {exc}")
     yield
     scheduler.shutdown(wait=False)
 

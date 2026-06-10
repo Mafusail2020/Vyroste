@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
 import Logo from '../components/Logo'
@@ -9,12 +10,10 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setError('')
     setLoading(true)
     try {
       await signIn(email, password)
@@ -25,7 +24,7 @@ export default function LoginPage() {
         navigate('/dashboard')
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Помилка входу')
+      toast.error(err instanceof Error ? err.message : 'Помилка входу')
     } finally {
       setLoading(false)
     }
@@ -40,12 +39,6 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-2xl font-black text-forest uppercase mb-6">Вхід</h1>
-
-          {error && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

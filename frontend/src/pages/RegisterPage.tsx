@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import Logo from '../components/Logo'
 
@@ -9,20 +10,18 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setError('')
 
     if (password !== confirm) {
-      setError('Паролі не співпадають')
+      toast.error('Паролі не співпадають')
       return
     }
     if (password.length < 6) {
-      setError('Пароль має містити щонайменше 6 символів')
+      toast.error('Пароль має містити щонайменше 6 символів')
       return
     }
 
@@ -31,7 +30,7 @@ export default function RegisterPage() {
       await signUp(email, password)
       setSuccess(true)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Помилка реєстрації')
+      toast.error(err instanceof Error ? err.message : 'Помилка реєстрації')
     } finally {
       setLoading(false)
     }
@@ -71,12 +70,6 @@ export default function RegisterPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-2xl font-black text-forest uppercase mb-6">Реєстрація</h1>
-
-          {error && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">
-              {error}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

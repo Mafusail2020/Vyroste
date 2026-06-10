@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
-import { getMonthMoonDays, type LunarFavor, type MoonDay } from '../lib/moonPhase'
+import { getMonthMoonDays, type MoonDay } from '../lib/moonPhase'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -216,14 +216,29 @@ export default function CalendarPage() {
   }
 
   const visible = windows.filter(w => !search || w.crop_name.toLowerCase().includes(search.toLowerCase()))
-  const lunarMap: Record<string, LunarFavor | null> = Object.fromEntries(
-    windows.map(w => [w.crop_id, w.lunar_preference as LunarFavor | null])
+  const lunarMap: Record<string, string | null> = Object.fromEntries(
+    windows.map(w => [w.crop_id, w.lunar_preference])
   )
 
   /* ── Early returns ────────────────────────────────────────────────────── */
   if (loading) return (
-    <div className="flex items-center justify-center py-32">
-      <div className="w-8 h-8 border-4 border-forest border-t-transparent rounded-full animate-spin" />
+    <div className="max-w-full px-6 py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="animate-pulse bg-gray-200 rounded-full w-8 h-8" />
+        <div className="animate-pulse bg-gray-200 rounded-lg h-7 w-36" />
+        <div className="animate-pulse bg-gray-200 rounded-full w-8 h-8" />
+      </div>
+      <div className="space-y-3">
+        {[0.7, 1, 0.85, 0.6, 0.9, 0.75].map((w, i) => (
+          <div key={i} className="flex gap-3 items-center">
+            <div className="animate-pulse bg-gray-200 rounded-lg h-12 w-20 shrink-0" />
+            <div
+              className="animate-pulse bg-gray-200 rounded-lg h-12"
+              style={{ width: `${w * 100}%` }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   )
   if (error) return (
@@ -487,7 +502,7 @@ export default function CalendarPage() {
                       const midIdx = Math.floor((seg.startDay + seg.endDay) / 2) - 1
                       const midMoon = showMoon ? monthMoon[midIdx] : undefined
                       const pref = lunarMap[seg.cropId]
-                      const lunarMatch = midMoon && pref && pref !== 'any' && midMoon.favor === pref
+                      const lunarMatch = midMoon && pref && pref !== 'any' && (midMoon.favor as string) === pref
 
                       return (
                         <div key={seg.task.id + '-' + month}

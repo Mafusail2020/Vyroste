@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import api from '../lib/api'
 import Logo from '../components/Logo'
 
@@ -44,14 +45,12 @@ export default function OnboardingPage() {
   const [regions, setRegions] = useState<Region[]>([])
   const [crops, setCrops] = useState<Crop[]>([])
   const [loadingData, setLoadingData] = useState(true)
-  const [fetchError, setFetchError] = useState('')
   const [regionId, setRegionId] = useState('')
   const [regionSearch, setRegionSearch] = useState('')
   const [plotType, setPlotType] = useState('')
   const [selectedCrops, setSelectedCrops] = useState<Set<string>>(new Set())
   const [cropFilter, setCropFilter] = useState<string>('all')
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -72,7 +71,7 @@ export default function OnboardingPage() {
           if (profile.region_id && profile.plot_type) setStep(2)
         }
       })
-      .catch(() => setFetchError('Не вдалось завантажити дані. Перевірте, що сервер запущено (uvicorn main:app --reload).'))
+      .catch(() => toast.error('Не вдалось завантажити дані. Перевірте, що сервер запущено.'))
       .finally(() => setLoadingData(false))
   }, [])
 
@@ -93,7 +92,6 @@ export default function OnboardingPage() {
 
   async function handleFinish() {
     setSubmitting(true)
-    setError('')
     try {
       await api.patch('/api/users/me/onboarding', {
         region_id: regionId,
@@ -102,7 +100,7 @@ export default function OnboardingPage() {
       })
       navigate('/dashboard')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Помилка збереження')
+      toast.error(err instanceof Error ? err.message : 'Помилка збереження')
     } finally {
       setSubmitting(false)
     }
@@ -156,12 +154,6 @@ export default function OnboardingPage() {
               onChange={(e) => setRegionSearch(e.target.value)}
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-forest text-sm mb-4"
             />
-
-            {fetchError && (
-              <div className="px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm mb-4">
-                {fetchError}
-              </div>
-            )}
 
             {loadingData ? (
               <div className="flex justify-center py-12">
@@ -275,9 +267,6 @@ export default function OnboardingPage() {
               })}
             </div>
 
-            {error && (
-              <div className="mt-4 px-4 py-3 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>
-            )}
           </div>
         )}
 

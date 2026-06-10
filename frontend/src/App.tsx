@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,6 +19,10 @@ import AdminPage from './pages/AdminPage'
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster
+        position="top-right"
+        toastOptions={{ duration: 4000, style: { fontFamily: 'inherit', fontSize: '14px' } }}
+      />
       <Routes>
         {/* Public auth pages — no Layout shell */}
         <Route path="/login" element={<LoginPage />} />

@@ -83,5 +83,11 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
 - [x] Slice 9 — Freemium + WayForPay
   - Set WAYFORPAY_MERCHANT_ACCOUNT, WAYFORPAY_MERCHANT_KEY, WAYFORPAY_MERCHANT_DOMAIN in backend/.env
   - Set BACKEND_ORIGIN=https://your-api.domain in backend/.env (for webhook URL)
-- [ ] Slice 10 — Email Alerts (SendPulse)
-- [ ] Slice 11 — Polish
+- [x] Slice 10 — Email Alerts (SendPulse)
+  - Migration: `backend/migrations/003_gdd_alerts.sql` — run in Supabase SQL Editor
+  - Set SENDPULSE_SMTP_USER, SENDPULSE_SMTP_PASS, FROM_EMAIL in backend/.env
+- [x] Slice 11 — Polish
+  - Deploy: `frontend/vercel.json` for SPA routing, `.env.example` files in both apps
+  - ErrorBoundary wraps all Layout pages (`src/components/ErrorBoundary.tsx`)
+  - Toast notifications via react-hot-toast (replaces inline error divs)
+  - Loading skeletons on CalendarPage + MapPage

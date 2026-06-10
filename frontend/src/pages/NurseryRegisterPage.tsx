@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import api from '../lib/api'
 
 interface Region {
@@ -30,7 +31,6 @@ export default function NurseryRegisterPage() {
   const [geoLoading,  setGeoLoading]  = useState(false)
   const [geoMsg,      setGeoMsg]      = useState('')
   const [submitting,  setSubmitting]  = useState(false)
-  const [error,       setError]       = useState('')
   const [success,     setSuccess]     = useState(false)
 
   useEffect(() => {
@@ -61,10 +61,9 @@ export default function NurseryRegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) { setError('Введіть назву розсадника'); return }
-    if (lat === null || lon === null) { setError('Вкажіть адресу та знайдіть координати'); return }
+    if (!name.trim()) { toast.error('Введіть назву розсадника'); return }
+    if (lat === null || lon === null) { toast.error('Вкажіть адресу та знайдіть координати'); return }
     setSubmitting(true)
-    setError('')
     try {
       await api.post('/api/nurseries', {
         name:        name.trim(),
@@ -79,7 +78,7 @@ export default function NurseryRegisterPage() {
       })
       setSuccess(true)
     } catch {
-      setError('Помилка надсилання. Спробуйте ще раз.')
+      toast.error('Помилка надсилання. Спробуйте ще раз.')
     } finally {
       setSubmitting(false)
     }
@@ -255,11 +254,6 @@ export default function NurseryRegisterPage() {
             className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-forest hover:border-gray-300 transition-colors"
           />
         </div>
-
-        {/* Error */}
-        {error && (
-          <div className="mt-4 px-4 py-3 rounded-xl bg-red-50 text-red-700 text-sm">{error}</div>
-        )}
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-8">
