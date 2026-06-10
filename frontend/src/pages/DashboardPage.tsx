@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
+import PremiumGate from '../components/PremiumGate'
 
 interface Profile {
   id: string
@@ -52,6 +53,8 @@ export default function DashboardPage() {
         Вітаємо, {user?.email?.split('@')[0]}!
       </h1>
       <p className="text-gray-500 mb-10">Ваш особистий садовий центр</p>
+
+      <PremiumGate cropCount={cropCount} isPremium={profile?.is_premium ?? false} />
 
       {needsOnboarding && (
         <div className="mb-8 p-5 rounded-2xl bg-card-green border border-green-200 flex items-center justify-between">

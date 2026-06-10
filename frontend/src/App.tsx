@@ -10,6 +10,8 @@ import DashboardPage from './pages/DashboardPage'
 import CalendarPage from './pages/CalendarPage'
 import AddCropPage from './pages/AddCropPage'
 import MapPage from './pages/MapPage'
+import PricingPage from './pages/PricingPage'
+import PaymentSuccessPage from './pages/PaymentSuccessPage'
 import NurseryRegisterPage from './pages/NurseryRegisterPage'
 import AdminPage from './pages/AdminPage'
 
@@ -37,7 +39,8 @@ export default function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/nurseries/register" element={<NurseryRegisterPage />} />
             <Route path="/admin" element={<AdminPage />} />
-            {/* Slices 8-11 add routes here */}
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
           </Route>
         </Route>
       </Routes>

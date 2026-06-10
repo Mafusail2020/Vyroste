@@ -45,12 +45,17 @@ async def get_calendar(current_user: dict = Depends(get_current_user)):
     sb = get_supabase()
     user_id = current_user["id"]
 
-    profile = sb.table("user_profiles").select("region_id, selected_crops").eq("id", user_id).maybe_single().execute()
+    profile = sb.table("user_profiles").select("region_id, selected_crops, is_premium").eq("id", user_id).maybe_single().execute()
     if not profile.data or not profile.data.get("region_id"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Complete onboarding first")
 
     region_id = profile.data["region_id"]
     selected_crop_ids: list[str] = profile.data.get("selected_crops") or []
+    is_premium: bool = profile.data.get("is_premium") or False
+
+    # Free tier: show only first 5 crops
+    if not is_premium:
+        selected_crop_ids = selected_crop_ids[:5]
 
     if not selected_crop_ids:
         return []

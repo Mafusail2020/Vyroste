@@ -9,6 +9,12 @@ class Settings(BaseSettings):
     supabase_service_key: str
     supabase_jwt_secret: str
     frontend_origin: str = "http://localhost:5173"
+    backend_origin: str = "http://localhost:8000"
+
+    # WayForPay — optional; checkout returns 503 if not set
+    wayforpay_merchant_account: str = ""
+    wayforpay_merchant_key: str = ""
+    wayforpay_merchant_domain: str = "vyroste.ua"
 
     @field_validator("supabase_url")
     @classmethod

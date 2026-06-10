@@ -80,6 +80,8 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
   - Set admin: `UPDATE user_profiles SET is_admin = true WHERE id = '<your-user-id>';`
 - [x] Slice 8 — GDD Cron + Weather
   - Manual trigger (for testing): POST /api/gdd/run (requires auth)
-- [ ] Slice 9 — Freemium + WayForPay
+- [x] Slice 9 — Freemium + WayForPay
+  - Set WAYFORPAY_MERCHANT_ACCOUNT, WAYFORPAY_MERCHANT_KEY, WAYFORPAY_MERCHANT_DOMAIN in backend/.env
+  - Set BACKEND_ORIGIN=https://your-api.domain in backend/.env (for webhook URL)
 - [ ] Slice 10 — Email Alerts (SendPulse)
 - [ ] Slice 11 — Polish
