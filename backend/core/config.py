@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     wayforpay_merchant_key: str = ""
     wayforpay_merchant_domain: str = "vyroste.ua"
 
+    # SendPulse SMTP — optional; GDD alerts skipped silently if not set
+    sendpulse_smtp_host: str = "smtp.sendpulse.com"
+    sendpulse_smtp_port: int = 587
+    sendpulse_smtp_user: str = ""
+    sendpulse_smtp_pass: str = ""
+    from_email: str = "hello@vyroste.ua"
+
     @field_validator("supabase_url")
     @classmethod
     def normalize_supabase_url(cls, v: str) -> str:
