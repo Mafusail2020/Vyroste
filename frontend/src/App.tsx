@@ -18,6 +18,7 @@ import AdminPage from './pages/AdminPage'
 import ContactPage from './pages/ContactPage'
 import BlogPage from './pages/BlogPage'
 import BlogPostPage from './pages/BlogPostPage'
+import AboutPage from './pages/AboutPage'
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
         {/* Marketing + app pages — inside Layout shell */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />

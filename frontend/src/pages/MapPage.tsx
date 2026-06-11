@@ -64,6 +64,24 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+/* ─── AnimateControls — slides zoom +/- in from top ─────────────────────── */
+
+function AnimateControls() {
+  const map = useMap()
+  useEffect(() => {
+    const ctrl = map.getContainer().querySelector('.leaflet-top.leaflet-left') as HTMLElement | null
+    if (!ctrl) return
+    ctrl.style.opacity = '0'
+    ctrl.style.transform = 'translateY(-28px)'
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      ctrl.style.transition = 'opacity 0.55s ease-out 300ms, transform 0.65s cubic-bezier(0.16,1,0.3,1) 300ms'
+      ctrl.style.opacity = '1'
+      ctrl.style.transform = 'none'
+    }))
+  }, [map])
+  return null
+}
+
 /* ─── FlyController — must live inside MapContainer ─────────────────────── */
 
 function FlyController({ target }: { target: [number, number] | null }) {
@@ -81,6 +99,25 @@ function FlyController({ target }: { target: [number, number] | null }) {
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 const UA_CENTER: [number, number] = [49.0, 32.0]
+
+const MAP_KEYFRAMES = `
+  @keyframes mapSlideLeft {
+    from { opacity: 0; transform: translateX(-100%); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes mapSlideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes mapFadeLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes mapFadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+`
 
 export default function MapPage() {
   const [nurseries,    setNurseries]    = useState<Nursery[]>([])
@@ -139,16 +176,26 @@ export default function MapPage() {
 
   return (
     <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
+      <style>{MAP_KEYFRAMES}</style>
 
       {/* ── Sidebar ───────────────────────────────────────────────────── */}
-      <aside className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 overflow-hidden">
+      <aside
+        className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 overflow-hidden"
+        style={{ animation: 'mapSlideLeft 0.65s cubic-bezier(0.16,1,0.3,1) both' }}
+      >
 
-        <div className="px-4 pt-4 pb-3 border-b border-gray-100 shrink-0">
+        <div
+          className="px-4 pt-4 pb-3 border-b border-gray-100 shrink-0"
+          style={{ animation: 'mapSlideDown 0.55s cubic-bezier(0.16,1,0.3,1) 80ms both' }}
+        >
           <h1 className="font-black text-sm uppercase tracking-wide text-gray-700">Мапи розсадників</h1>
           <p className="text-xs text-gray-400 mt-0.5">{filtered.length} знайдено</p>
         </div>
 
-        <div className="px-4 py-3 border-b border-gray-100 space-y-2 shrink-0">
+        <div
+          className="px-4 py-3 border-b border-gray-100 space-y-2 shrink-0"
+          style={{ animation: 'mapSlideDown 0.55s cubic-bezier(0.16,1,0.3,1) 160ms both' }}
+        >
           <select
             value={regionFilter}
             onChange={e => setRegionFilter(e.target.value)}
@@ -180,10 +227,11 @@ export default function MapPage() {
               <p>Розсадників не знайдено</p>
               <p className="text-xs mt-1 text-gray-300">Запустіть python scripts/seed_nurseries.py або додайте свій</p>
             </div>
-          ) : filtered.map(n => (
+          ) : filtered.map((n, i) => (
             <button key={n.id}
               onClick={() => { setActiveId(n.id); setFlyTarget([n.latitude, n.longitude]) }}
               className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${activeId === n.id ? 'bg-forest/5 border-l-2 border-l-forest' : ''}`}
+              style={{ animation: `mapFadeLeft 0.5s cubic-bezier(0.16,1,0.3,1) ${240 + i * 60}ms both` }}
             >
               <p className={`text-sm font-semibold truncate ${activeId === n.id ? 'text-forest' : 'text-gray-800'}`}>
                 {n.name}
@@ -194,7 +242,10 @@ export default function MapPage() {
           ))}
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-100 shrink-0">
+        <div
+          className="px-4 py-3 border-t border-gray-100 shrink-0"
+          style={{ animation: 'mapFadeUp 0.5s cubic-bezier(0.16,1,0.3,1) 320ms both' }}
+        >
           <Link
             to="/nurseries/register"
             className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-forest text-white text-sm font-bold uppercase tracking-wide hover:bg-forest-dark transition-colors"
@@ -217,6 +268,7 @@ export default function MapPage() {
           />
 
           <FlyController target={flyTarget} />
+          <AnimateControls />
 
           {userPos && (
             <Marker position={userPos} icon={userDotIcon}>

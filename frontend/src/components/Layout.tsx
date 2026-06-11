@@ -29,31 +29,41 @@ export default function Layout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `text-sm transition-colors ${
+                  `group relative text-sm pb-0.5 transition-colors duration-200 ${
                     isActive
                       ? 'text-forest font-semibold'
                       : 'text-gray-600 hover:text-forest'
                   }`
                 }
               >
-                {label}
+                {({ isActive }) => (
+                  <>
+                    {label}
+                    <span
+                      className={`absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-forest transition-transform duration-300 ease-out ${isActive ? 'scale-x-100' : 'scale-x-0 origin-right group-hover:scale-x-100 group-hover:origin-left'}`}
+                      aria-hidden="true"
+                    />
+                  </>
+                )}
               </NavLink>
             ))}
 
             {user ? (
               <button
                 onClick={() => signOut()}
-                className="text-sm text-gray-600 hover:text-forest transition-colors"
+                className="group relative text-sm pb-0.5 text-gray-600 hover:text-forest transition-colors duration-200"
               >
                 Вийти
+                <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-forest scale-x-0 origin-right transition-transform duration-300 ease-out group-hover:scale-x-100 group-hover:origin-left" aria-hidden="true" />
               </button>
             ) : (
               <div className="flex items-center gap-3 ml-2">
                 <Link
                   to="/login"
-                  className="text-sm text-gray-600 hover:text-forest transition-colors"
+                  className="group relative text-sm pb-0.5 text-gray-600 hover:text-forest transition-colors duration-200"
                 >
                   Увійти
+                  <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-forest scale-x-0 origin-right transition-transform duration-300 ease-out group-hover:scale-x-100 group-hover:origin-left" aria-hidden="true" />
                 </Link>
                 <Link
                   to="/register"
