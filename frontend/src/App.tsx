@@ -16,6 +16,7 @@ import PaymentSuccessPage from './pages/PaymentSuccessPage'
 import NurseryRegisterPage from './pages/NurseryRegisterPage'
 import AdminPage from './pages/AdminPage'
 import ContactPage from './pages/ContactPage'
+import BlogPage from './pages/BlogPage'
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/blog" element={<BlogPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
