@@ -29,7 +29,7 @@ from sqlalchemy import (
     Text,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.enums import CropType, GrowingMethod, LunarPreference
@@ -37,6 +37,44 @@ from app.enums import CropType, GrowingMethod, LunarPreference
 
 class Base(DeclarativeBase):
     pass
+
+
+class Nursery(Base):
+    """A B2B nursery shown on the map. Media + tags are owner-managed;
+    admin_tags are moderator-only badges."""
+    __tablename__ = "nurseries"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    region_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("climate_zones.id")
+    )
+    latitude: Mapped[float] = mapped_column(Numeric(9, 6), nullable=False)
+    longitude: Mapped[float] = mapped_column(Numeric(9, 6), nullable=False)
+    address: Mapped[str | None] = mapped_column(Text)
+    phone: Mapped[str | None] = mapped_column(Text)
+    email: Mapped[str | None] = mapped_column(Text)
+    website: Mapped[str | None] = mapped_column(Text)
+
+    crops_available: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(UUID(as_uuid=True)), server_default=text("'{}'")
+    )
+
+    # ── Media + tags (slice 15) ─────────────────────────────────────────────
+    photos: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'"))
+    videos: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'"))
+    tags: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'"))        # owner-managed
+    admin_tags: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'"))  # moderator-only
+
+    status: Mapped[str] = mapped_column(Text, server_default=text("'pending'"))
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+
+    __table_args__ = (
+        CheckConstraint("status IN ('pending','verified','rejected')", name="nurseries_status_check"),
+    )
 
 
 class ClimateZone(Base):

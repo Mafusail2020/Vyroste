@@ -28,6 +28,10 @@ export default function NurseryRegisterPage() {
   const [email,       setEmail]       = useState('')
   const [website,     setWebsite]     = useState('')
   const [regionId,    setRegionId]    = useState('')
+  const [tags,        setTags]        = useState<string[]>([])
+  const [tagInput,    setTagInput]    = useState('')
+  const [photos,      setPhotos]      = useState('')   // newline-separated URLs
+  const [videos,      setVideos]      = useState('')   // newline-separated URLs
   const [geoLoading,  setGeoLoading]  = useState(false)
   const [geoMsg,      setGeoMsg]      = useState('')
   const [submitting,  setSubmitting]  = useState(false)
@@ -59,6 +63,16 @@ export default function NurseryRegisterPage() {
     }
   }
 
+  function addTag(raw: string) {
+    const t = raw.trim().replace(/,$/, '')
+    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
+    setTagInput('')
+  }
+
+  function toUrlList(text: string): string[] {
+    return text.split('\n').map(s => s.trim()).filter(Boolean)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) { toast.error('Введіть назву розсадника'); return }
@@ -75,6 +89,9 @@ export default function NurseryRegisterPage() {
         email:       email.trim() || null,
         website:     website.trim() || null,
         region_id:   regionId || null,
+        tags,
+        photos:      toUrlList(photos),
+        videos:      toUrlList(videos),
       })
       setSuccess(true)
     } catch {
@@ -252,6 +269,60 @@ export default function NurseryRegisterPage() {
             onChange={e => setWebsite(e.target.value)}
             placeholder="https://moirozsiady.ua"
             className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-forest hover:border-gray-300 transition-colors"
+          />
+        </div>
+
+        {/* Tags */}
+        <div className="flex items-start gap-4 py-4 border-b border-gray-100">
+          <label className="w-40 text-sm font-semibold text-gray-700 shrink-0 pt-2.5">
+            Теги <span className="text-gray-400 font-normal">для пошуку</span>
+          </label>
+          <div className="flex-1">
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {tags.map(t => (
+                <span key={t} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-forest/10 text-forest">
+                  {t}
+                  <button type="button" onClick={() => setTags(prev => prev.filter(x => x !== t))} className="hover:text-forest-dark">×</button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput) } }}
+              onBlur={() => tagInput && addTag(tagInput)}
+              placeholder="троянди, хвойні, саджанці плодових — Enter після кожного"
+              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-forest hover:border-gray-300 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Photos */}
+        <div className="flex items-start gap-4 py-4 border-b border-gray-100">
+          <label className="w-40 text-sm font-semibold text-gray-700 shrink-0 pt-2.5">
+            Фото <span className="text-gray-400 font-normal">URL, по 1 на рядок</span>
+          </label>
+          <textarea
+            value={photos}
+            onChange={e => setPhotos(e.target.value)}
+            placeholder={'https://.../photo1.jpg\nhttps://.../photo2.jpg'}
+            rows={2}
+            className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-mono focus:outline-none focus:border-forest hover:border-gray-300 transition-colors resize-none"
+          />
+        </div>
+
+        {/* Videos */}
+        <div className="flex items-start gap-4 py-4 border-b border-gray-100">
+          <label className="w-40 text-sm font-semibold text-gray-700 shrink-0 pt-2.5">
+            Відео <span className="text-gray-400 font-normal">URL, по 1 на рядок</span>
+          </label>
+          <textarea
+            value={videos}
+            onChange={e => setVideos(e.target.value)}
+            placeholder={'https://youtu.be/...\nhttps://.../clip.mp4'}
+            rows={2}
+            className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-mono focus:outline-none focus:border-forest hover:border-gray-300 transition-colors resize-none"
           />
         </div>
 

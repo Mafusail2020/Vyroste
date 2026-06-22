@@ -44,6 +44,10 @@ interface Nursery {
   email: string | null
   website: string | null
   region_id: string | null
+  photos: string[] | null
+  videos: string[] | null
+  tags: string[] | null
+  admin_tags: string[] | null
 }
 
 interface Region {
@@ -117,6 +121,10 @@ const MAP_KEYFRAMES = `
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes mapSlideRight {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
 `
 
 export default function MapPage() {
@@ -128,6 +136,7 @@ export default function MapPage() {
   const [userPos,      setUserPos]      = useState<[number, number] | null>(null)
   const [locating,     setLocating]     = useState(false)
   const [activeId,     setActiveId]     = useState<string | null>(null)
+  const [tagFilter,    setTagFilter]    = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -139,7 +148,14 @@ export default function MapPage() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const filtered = nurseries.filter(n => !regionFilter || n.region_id === regionFilter)
+  const allTags = [...new Set(nurseries.flatMap(n => n.tags ?? []))].sort()
+  const filtered = nurseries.filter(n =>
+    (!regionFilter || n.region_id === regionFilter) &&
+    (!tagFilter || (n.tags ?? []).includes(tagFilter))
+  )
+  const selected = activeId
+    ? filtered.find(n => n.id === activeId) ?? nurseries.find(n => n.id === activeId) ?? null
+    : null
 
   function findNearest() {
     if (!navigator.geolocation) return
@@ -218,6 +234,29 @@ export default function MapPage() {
             }
             Знайти найближчий
           </button>
+
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {tagFilter && (
+                <button onClick={() => setTagFilter('')}
+                  className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200">
+                  ✕ скинути
+                </button>
+              )}
+              {allTags.map(t => (
+                <button key={t}
+                  onClick={() => setTagFilter(tagFilter === t ? '' : t)}
+                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    tagFilter === t
+                      ? 'bg-forest text-white border-forest'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-forest/40'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
@@ -321,6 +360,112 @@ export default function MapPage() {
           ))}
         </MapContainer>
       </div>
+
+      {/* ── Right detail panel — slides in on marker/list click ───────── */}
+      {selected && (
+        <aside
+          key={selected.id}
+          className="w-96 shrink-0 bg-white border-l border-gray-200 overflow-y-auto"
+          style={{ animation: 'mapSlideRight 0.4s cubic-bezier(0.16,1,0.3,1) both' }}
+        >
+          {/* Header */}
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-5 pt-4 pb-3 flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <h2 className="font-black text-lg text-forest leading-tight">{selected.name}</h2>
+              {selected.address && <p className="text-xs text-gray-400 mt-0.5">📍 {selected.address}</p>}
+            </div>
+            <button
+              onClick={() => setActiveId(null)}
+              className="shrink-0 w-7 h-7 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 text-lg leading-none flex items-center justify-center"
+              title="Закрити"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="p-5 space-y-5">
+            {/* Photos */}
+            {(selected.photos?.length ?? 0) > 0 && (
+              <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+                {selected.photos!.map((src, i) => (
+                  <img key={i} src={src} alt={`${selected.name} ${i + 1}`}
+                    className="h-40 w-auto rounded-xl object-cover shrink-0 border border-gray-100" loading="lazy" />
+                ))}
+              </div>
+            )}
+
+            {/* Videos */}
+            {(selected.videos?.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                {selected.videos!.map((url, i) => (
+                  /youtu\.?be/.test(url) ? (
+                    <iframe key={i} src={url.replace('watch?v=', 'embed/')}
+                      className="w-full aspect-video rounded-xl border border-gray-100"
+                      allowFullScreen title={`video-${i}`} />
+                  ) : (
+                    <video key={i} src={url} controls
+                      className="w-full rounded-xl border border-gray-100 bg-black" />
+                  )
+                ))}
+              </div>
+            )}
+
+            {/* Tags + admin badges */}
+            {((selected.tags?.length ?? 0) > 0 || (selected.admin_tags?.length ?? 0) > 0) && (
+              <div className="flex flex-wrap gap-1.5">
+                {selected.admin_tags?.map(t => (
+                  <span key={`a-${t}`} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-forest/10 text-forest border border-forest/20">
+                    ✓ {t}
+                  </span>
+                ))}
+                {selected.tags?.map(t => (
+                  <button key={`t-${t}`}
+                    onClick={() => setTagFilter(tagFilter === t ? '' : t)}
+                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                      tagFilter === t ? 'bg-forest text-white border-forest' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-forest/40'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Description */}
+            {selected.description && (
+              <p className="text-sm text-gray-600 leading-relaxed">{selected.description}</p>
+            )}
+
+            {/* Contacts */}
+            <div className="space-y-2 text-sm border-t border-gray-100 pt-4">
+              {selected.phone && (
+                <a href={`tel:${selected.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-forest">
+                  <span>📞</span> {selected.phone}
+                </a>
+              )}
+              {selected.email && (
+                <a href={`mailto:${selected.email}`} className="flex items-center gap-2 text-gray-600 hover:text-forest">
+                  <span>✉️</span> {selected.email}
+                </a>
+              )}
+              {selected.website && (
+                <a href={selected.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 hover:text-forest">
+                  <span>🌐</span> {selected.website.replace(/^https?:\/\//, '')}
+                </a>
+              )}
+            </div>
+
+            {/* Route */}
+            <a
+              href={`https://maps.google.com/?q=${selected.latitude},${selected.longitude}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-forest text-white text-sm font-bold uppercase tracking-wide hover:bg-forest-dark transition-colors"
+            >
+              🗺️ Прокласти маршрут
+            </a>
+          </div>
+        </aside>
+      )}
     </div>
   )
 }
