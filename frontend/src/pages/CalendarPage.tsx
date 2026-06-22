@@ -178,6 +178,7 @@ export default function CalendarPage() {
   const [creating,     setCreating]     = useState(false)
   const [newName,      setNewName]      = useState('')
   const [newRegion,    setNewRegion]    = useState('')
+  const [newType,      setNewType]      = useState('mixed')
   const [editingId,    setEditingId]    = useState<string | null>(null)
   const [editName,     setEditName]     = useState('')
   const [regionEditId, setRegionEditId] = useState<string | null>(null)
@@ -242,9 +243,13 @@ export default function CalendarPage() {
   }
 
   async function changeType(c: CalendarMeta, calType: string) {
-    if (calType === c.calendar_type) return
-    const r = await api.patch<CalendarMeta>(`/api/calendars/${c.id}`, { calendar_type: calType })
-    setCalendars(p => p.map(x => (x.id === c.id ? r.data : x)))
+    if (calType === (c.calendar_type || 'mixed')) return
+    try {
+      const r = await api.patch<CalendarMeta>(`/api/calendars/${c.id}`, { calendar_type: calType })
+      setCalendars(p => p.map(x => (x.id === c.id ? r.data : x)))
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Не вдалось змінити тип (застосуйте міграцію 008)')
+    }
   }
 
   async function createCalendar() {
@@ -252,10 +257,11 @@ export default function CalendarPage() {
       const r = await api.post<CalendarMeta>('/api/calendars', {
         name: newName.trim() || 'Новий календар',
         region_id: newRegion || activeCal?.region_id || null,
+        calendar_type: newType,
       })
       setCalendars(p => [...p, r.data])
       setActiveId(r.data.id)
-      setCreating(false); setSwitcherOpen(false); setNewName(''); setNewRegion('')
+      setCreating(false); setSwitcherOpen(false); setNewName(''); setNewRegion(''); setNewType('mixed')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Не вдалось створити календар')
     }
@@ -736,7 +742,7 @@ export default function CalendarPage() {
                       {typeEditId === c.id ? (
                         <select
                           autoFocus
-                          value={c.calendar_type}
+                          value={c.calendar_type || 'mixed'}
                           onChange={e => { changeType(c, e.target.value); setTypeEditId(null) }}
                           onBlur={() => setTypeEditId(null)}
                           className="flex-1 min-w-0 text-xs px-2 py-1 border border-forest rounded-lg bg-white focus:outline-none"
@@ -751,7 +757,7 @@ export default function CalendarPage() {
                           className="flex-1 min-w-0 text-left text-xs text-gray-500 hover:text-forest truncate"
                           title="Змінити тип календаря"
                         >
-                          {CAL_TYPE_LABELS[c.calendar_type] ?? c.calendar_type}
+                          {CAL_TYPE_LABELS[c.calendar_type] ?? CAL_TYPE_LABELS.mixed}
                         </button>
                       )}
                     </div>
@@ -782,6 +788,14 @@ export default function CalendarPage() {
                 >
                   <option value="">Регіон (як активний)</option>
                   {regions.map(r => <option key={r.id} value={r.id}>{r.region}</option>)}
+                </select>
+                <select
+                  value={newType} onChange={e => setNewType(e.target.value)}
+                  className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-forest bg-white"
+                >
+                  <option value="mixed">🌿 Змішаний</option>
+                  <option value="horod">🥕 Город</option>
+                  <option value="sad">🌸 Сад</option>
                 </select>
                 <div className="flex gap-2">
                   <button onClick={createCalendar} className="flex-1 text-xs font-bold py-2 rounded-lg bg-forest text-white hover:bg-forest-dark">Створити</button>
