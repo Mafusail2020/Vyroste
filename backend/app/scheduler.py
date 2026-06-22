@@ -8,48 +8,55 @@ _ALERT_THRESHOLD = 0.8  # 80% of gdd_to_harvest triggers email
 
 
 def _send_gdd_alerts() -> None:
-    """Check GDD thresholds for all premium users and send harvest-approaching emails."""
+    """Check GDD thresholds across all premium users' calendars and send
+    harvest-approaching emails. Keyed by variety id (gdd_alerts_sent.crop_id)."""
     from app.email import send_gdd_alert
 
     sb = get_supabase()
     year = date.today().year
     season_start = f"{year}-04-01"
 
-    # Premium users with a region configured
-    profiles_res = (
-        sb.table("user_profiles")
-        .select("id,region_id,selected_crops")
-        .eq("is_premium", True)
-        .not_.is_("region_id", "null")
-        .not_.is_("selected_crops", "null")
-        .execute()
+    # Premium user ids.
+    premium_res = (
+        sb.table("user_profiles").select("id").eq("is_premium", True).execute()
     )
-    profiles = profiles_res.data or []
-    if not profiles:
+    premium_ids = [p["id"] for p in (premium_res.data or [])]
+    if not premium_ids:
         return
 
-    # Build email map from Supabase Auth admin API
+    # Every calendar belonging to a premium user.
+    cals_res = (
+        sb.table("calendars")
+        .select("user_id,region_id,selected_varieties")
+        .in_("user_id", premium_ids)
+        .not_.is_("region_id", "null")
+        .execute()
+    )
+    calendars = [c for c in (cals_res.data or []) if c.get("selected_varieties")]
+    if not calendars:
+        return
+
+    # Build email map from Supabase Auth admin API.
     try:
         all_users = sb.auth.admin.list_users()
         email_map: dict[str, str] = {u.id: (u.email or "") for u in all_users}
     except Exception:
         return
 
-    # Collect all unique crop IDs across users
-    all_crop_ids: list[str] = list({c for p in profiles for c in (p.get("selected_crops") or [])})
-    if not all_crop_ids:
+    # Variety meta: gdd_to_harvest + parent base_temperature.
+    all_variety_ids = list({v for c in calendars for v in (c.get("selected_varieties") or [])})
+    if not all_variety_ids:
         return
-
-    crops_res = (
-        sb.table("crops")
-        .select("id,name_uk,base_temperature,gdd_to_harvest")
-        .in_("id", all_crop_ids)
+    var_res = (
+        sb.table("crop_varieties")
+        .select("id,name_uk,gdd_to_harvest,category:crop_categories(base_temperature)")
+        .in_("id", all_variety_ids)
         .execute()
     )
-    crop_map: dict[str, dict] = {c["id"]: c for c in (crops_res.data or [])}
+    variety_map: dict[str, dict] = {v["id"]: v for v in (var_res.data or [])}
 
-    # GDD rows for all relevant regions since season start
-    all_region_ids: list[str] = list({p["region_id"] for p in profiles if p.get("region_id")})
+    # Weather per region since season start.
+    all_region_ids = list({c["region_id"] for c in calendars if c.get("region_id")})
     gdd_res = (
         sb.table("gdd_accumulation")
         .select("region_id,tmax,tmin")
@@ -62,19 +69,16 @@ def _send_gdd_alerts() -> None:
     for row in (gdd_res.data or []):
         region_weather.setdefault(row["region_id"], []).append(row)
 
-    # Already-sent alerts this season
+    # Already-sent alerts this season (user_id, variety_id).
     sent_res = (
-        sb.table("gdd_alerts_sent")
-        .select("user_id,crop_id")
-        .eq("season_year", year)
-        .execute()
+        sb.table("gdd_alerts_sent").select("user_id,crop_id").eq("season_year", year).execute()
     )
     sent_set: set[tuple[str, str]] = {(r["user_id"], r["crop_id"]) for r in (sent_res.data or [])}
 
-    for profile in profiles:
-        user_id: str = profile["id"]
-        region_id: str | None = profile.get("region_id")
-        crops: list[str] = profile.get("selected_crops") or []
+    for cal in calendars:
+        user_id: str = cal["user_id"]
+        region_id: str | None = cal.get("region_id")
+        variety_ids: list[str] = cal.get("selected_varieties") or []
         email = email_map.get(user_id, "")
         if not email or not region_id:
             continue
@@ -83,14 +87,14 @@ def _send_gdd_alerts() -> None:
         if not weather:
             continue
 
-        for crop_id in crops:
-            if (user_id, crop_id) in sent_set:
+        for variety_id in variety_ids:
+            if (user_id, variety_id) in sent_set:
                 continue
-            crop = crop_map.get(crop_id)
-            if not crop:
+            v = variety_map.get(variety_id)
+            if not v:
                 continue
-            base = float(crop.get("base_temperature") or 10)
-            target = int(crop.get("gdd_to_harvest") or 0)
+            base = float((v.get("category") or {}).get("base_temperature") or 10)
+            target = int(v.get("gdd_to_harvest") or 0)
             if target == 0:
                 continue
 
@@ -102,14 +106,14 @@ def _send_gdd_alerts() -> None:
 
             if accumulated / target >= _ALERT_THRESHOLD:
                 try:
-                    send_gdd_alert(email, crop["name_uk"], accumulated / target)
+                    send_gdd_alert(email, v["name_uk"], accumulated / target)
                     sb.table("gdd_alerts_sent").insert({
                         "user_id":     user_id,
                         "region_id":   region_id,
-                        "crop_id":     crop_id,
+                        "crop_id":     variety_id,
                         "season_year": year,
                     }).execute()
-                    sent_set.add((user_id, crop_id))
+                    sent_set.add((user_id, variety_id))
                 except Exception:
                     pass
 

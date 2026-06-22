@@ -6,29 +6,34 @@ from app.deps import get_supabase
 router = APIRouter()
 
 
+def _resolve_calendar(sb, user_id: str, calendar_id: str | None) -> dict | None:
+    """The requested calendar (ownership-checked) or the user's earliest one."""
+    q = sb.table("calendars").select("region_id,selected_varieties").eq("user_id", user_id)
+    if calendar_id:
+        res = q.eq("id", calendar_id).maybe_single().execute()
+        return res.data
+    res = q.order("created_at").limit(1).execute()
+    return res.data[0] if res.data else None
+
+
 @router.get("/gdd/me")
-async def get_my_gdd(current_user: dict = Depends(get_current_user)):
+async def get_my_gdd(
+    calendar_id: str | None = None,
+    current_user: dict = Depends(get_current_user),
+):
     sb = get_supabase()
 
-    profile = (
-        sb.table("user_profiles")
-        .select("region_id,selected_crops")
-        .eq("id", current_user["id"])
-        .maybe_single()
-        .execute()
-    )
-    if not profile.data:
+    cal = _resolve_calendar(sb, current_user["id"], calendar_id)
+    if not cal:
         return {"region_id": None, "season_start": None, "crops": []}
 
-    region_id = profile.data.get("region_id")
-    selected: list[str] = profile.data.get("selected_crops") or []
-
-    if not region_id or not selected:
+    region_id = cal.get("region_id")
+    variety_ids: list[str] = cal.get("selected_varieties") or []
+    if not region_id or not variety_ids:
         return {"region_id": region_id, "season_start": None, "crops": []}
 
     season_start = f"{date.today().year}-04-01"
 
-    # Raw weather rows since season start
     rows = (
         sb.table("gdd_accumulation")
         .select("tmax,tmin")
@@ -39,18 +44,19 @@ async def get_my_gdd(current_user: dict = Depends(get_current_user)):
     )
     weather = rows.data or []
 
-    # Fetch crops
-    crops_res = (
-        sb.table("crops")
-        .select("id,name_uk,base_temperature,gdd_to_harvest")
-        .in_("id", selected)
+    # Variety holds gdd_to_harvest; parent category holds base_temperature.
+    varieties_res = (
+        sb.table("crop_varieties")
+        .select("id,name_uk,gdd_to_harvest,category:crop_categories(base_temperature)")
+        .in_("id", variety_ids)
         .execute()
     )
 
     result = []
-    for crop in (crops_res.data or []):
-        base = float(crop.get("base_temperature") or 10)
-        target = int(crop.get("gdd_to_harvest") or 0)
+    for v in (varieties_res.data or []):
+        cat = v.get("category") or {}
+        base = float(cat.get("base_temperature") or 10)
+        target = int(v.get("gdd_to_harvest") or 0)
         accumulated = sum(
             max(0.0, (r["tmax"] + r["tmin"]) / 2 - base)
             for r in weather
@@ -58,12 +64,12 @@ async def get_my_gdd(current_user: dict = Depends(get_current_user)):
         )
         pct = round(min(accumulated / target, 1.0), 3) if target > 0 else 0.0
         result.append({
-            "crop_id":        crop["id"],
-            "crop_name":      crop["name_uk"],
+            "crop_id":          v["id"],          # variety id (matches calendar windows)
+            "crop_name":        v["name_uk"],
             "base_temperature": base,
-            "gdd_to_harvest": target,
-            "gdd_accumulated": round(accumulated, 1),
-            "pct":            pct,
+            "gdd_to_harvest":   target,
+            "gdd_accumulated":  round(accumulated, 1),
+            "pct":              pct,
         })
 
     return {"region_id": region_id, "season_start": season_start, "crops": result}
