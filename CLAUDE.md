@@ -116,3 +116,15 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
     `GET .../windows` (flat CropWindow[]). `/api/gdd/me?calendar_id=` keyed by variety id.
   - UI: right-side calendar panel in `CalendarPage.tsx` (switch/create/inline-rename/region+type
     edit); grouped category→variety picker in Onboarding + AddCrop.
+- [x] Slice 15 — Nursery Media + Tags (map detail panel)
+  - Migration: `backend/migrations/009_nursery_media_tags.sql` (photos/videos/tags/admin_tags
+    TEXT[] + GIN tag index)
+  - Owner sets tags/photos/videos on create or PATCH; `admin_tags` are moderator-only
+    (`PATCH /api/nurseries/{id}/admin-tags`, is_admin checked). List filter `?tag=`.
+  - `MapPage.tsx`: left list + map + right detail panel that slides in on marker click
+    (photos, videos, tags/admin badges, contacts, route); hidden until a marker is selected.
+- [x] Slice 16 — Персональний кабінет
+  - Migration: `backend/migrations/010_saved_articles.sql` (saved_articles, owner RLS;
+    article_id is a plain uuid — Knowledge Base ships later)
+  - `PATCH /api/users/me` (region/plot_type); `GET/POST/DELETE /api/users/me/saved-articles`
+  - `CabinetPage.tsx` at `/cabinet` (nav link «Кабінет»): Налаштування + Збережені статті tabs.
