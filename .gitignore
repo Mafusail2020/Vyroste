@@ -22,3 +22,6 @@ backend/*.egg-info/
 
 # Reference assets (large, not source)
 REFERENCE_IMG/
+
+Виросте_Календар_посадок-Календар посадок.csv
+viroste_tech_stack_mvp.md

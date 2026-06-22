@@ -91,3 +91,28 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
   - ErrorBoundary wraps all Layout pages (`src/components/ErrorBoundary.tsx`)
   - Toast notifications via react-hot-toast (replaces inline error divs)
   - Loading skeletons on CalendarPage + MapPage
+- [x] Slice 12 — Blog CMS
+  - Migration: `backend/migrations/004_blog_posts.sql` — run in Supabase SQL Editor
+  - Seed: `python scripts/seed_blog_posts.py`
+- [x] Slice 13 — Crop Categories + Varieties (frost-relative offsets)
+  - Migration: `backend/migrations/005_crop_categories_varieties.sql`
+  - Splits flat `crops` → `crop_categories` (Томат) 1─many `crop_varieties` (Сорт). Variety
+    planting dates are stored as integer DAY offsets relative to the region's
+    `avg_last_frost_date` — calendar computes real dates per region, no hardcoded months.
+  - `growing_method` enum: `seedling` / `direct` / `both`; NULL offset = phase N/A.
+  - Seed: `python scripts/seed_crop_varieties.py` (parses `*Календар*.csv`; `--dry-run` to preview).
+    Offsets anchored on true agro-zone frost (constants in the script) to match climate_zones.
+  - `lib/api.ts` calendar shape stays flat (`CropWindow`); `/api/categories` returns nested
+    categories→varieties for the grouped picker. SQLAlchemy models in `app/models.py` are
+    schema docs only — runtime stays on the Supabase client (RLS intact).
+- [x] Slice 14 — Multiple Calendars + Types
+  - Migrations: `006_calendars.sql` (calendars table, owner RLS), `007_drop_legacy_crops.sql`
+    (drops `crops` + `user_profiles.selected_crops`; drops stale `gdd_alerts_sent` FK),
+    `008_calendar_type.sql` (`calendar_type` horod/sad/mixed).
+  - Each calendar owns its own `region_id` + `selected_varieties` + `calendar_type`.
+    Type gates which crop kinds can be added: horod→vegetable/herb, sad→flower/berry/tree,
+    mixed→all (enforced in `app/calendars.py` add-variety + frontend picker filter).
+  - Endpoints: `GET/POST/PATCH/DELETE /api/calendars`, `.../varieties/{id}`,
+    `GET .../windows` (flat CropWindow[]). `/api/gdd/me?calendar_id=` keyed by variety id.
+  - UI: right-side calendar panel in `CalendarPage.tsx` (switch/create/inline-rename/region+type
+    edit); grouped category→variety picker in Onboarding + AddCrop.
