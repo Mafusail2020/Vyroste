@@ -49,13 +49,33 @@ export default function Layout() {
             ))}
 
             {user ? (
-              <button
-                onClick={() => signOut()}
-                className="group relative text-sm pb-0.5 text-gray-600 hover:text-forest transition-colors duration-200"
-              >
-                Вийти
-                <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-forest scale-x-0 origin-right transition-transform duration-300 ease-out group-hover:scale-x-100 group-hover:origin-left" aria-hidden="true" />
-              </button>
+              <>
+                <NavLink
+                  to="/cabinet"
+                  className={({ isActive }) =>
+                    `group relative text-sm pb-0.5 transition-colors duration-200 ${
+                      isActive ? 'text-forest font-semibold' : 'text-gray-600 hover:text-forest'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      Кабінет
+                      <span
+                        className={`absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-forest transition-transform duration-300 ease-out ${isActive ? 'scale-x-100' : 'scale-x-0 origin-right group-hover:scale-x-100 group-hover:origin-left'}`}
+                        aria-hidden="true"
+                      />
+                    </>
+                  )}
+                </NavLink>
+                <button
+                  onClick={() => signOut()}
+                  className="group relative text-sm pb-0.5 text-gray-600 hover:text-forest transition-colors duration-200"
+                >
+                  Вийти
+                  <span className="absolute bottom-0 left-0 h-[2px] w-full rounded-full bg-forest scale-x-0 origin-right transition-transform duration-300 ease-out group-hover:scale-x-100 group-hover:origin-left" aria-hidden="true" />
+                </button>
+              </>
             ) : (
               <div className="flex items-center gap-3 ml-2">
                 <Link

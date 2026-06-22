@@ -19,6 +19,7 @@ import ContactPage from './pages/ContactPage'
 import BlogPage from './pages/BlogPage'
 import BlogPostPage from './pages/BlogPostPage'
 import AboutPage from './pages/AboutPage'
+import CabinetPage from './pages/CabinetPage'
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/cabinet" element={<CabinetPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/crops/add" element={<AddCropPage />} />
             <Route path="/map" element={<MapPage />} />
