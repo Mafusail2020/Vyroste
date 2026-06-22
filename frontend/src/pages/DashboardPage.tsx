@@ -8,7 +8,7 @@ interface Profile {
   id: string
   region_id: string | null
   plot_type: string | null
-  selected_crops: string[] | null
+  selected_varieties: string[] | null
   is_premium: boolean
 }
 
@@ -43,7 +43,7 @@ export default function DashboardPage() {
   }, [])
 
   const needsOnboarding = profile && (!profile.region_id || !profile.plot_type)
-  const cropCount       = profile?.selected_crops?.length ?? 0
+  const cropCount       = profile?.selected_varieties?.length ?? 0
   const gddCrops        = (gdd?.crops ?? []).filter(c => c.gdd_to_harvest > 0)
   const gddHasData      = gddCrops.some(c => c.gdd_accumulated > 0)
 

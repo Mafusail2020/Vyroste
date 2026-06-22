@@ -17,6 +17,27 @@ interface CropWindow {
   harvest_end: string
 }
 
+interface CalendarMeta {
+  id: string
+  name: string
+  region_id: string | null
+  region_name: string | null
+  calendar_type: 'horod' | 'sad' | 'mixed'
+  variety_count: number
+}
+
+const CAL_TYPE_LABELS: Record<string, string> = {
+  horod: '🥕 Город',
+  sad:   '🌸 Сад',
+  mixed: '🌿 Змішаний',
+}
+
+interface RegionMeta {
+  id: string
+  region: string
+  city: string
+}
+
 type TaskType = 'seeding' | 'bed_prep' | 'transplanting' | 'direct_sow' | 'cultivating' | 'harvesting'
 
 interface Task {
@@ -150,6 +171,18 @@ export default function CalendarPage() {
   const [windows,      setWindows]      = useState<CropWindow[]>([])
   const [loading,      setLoading]      = useState(true)
   const [error,        setError]        = useState('')
+  const [calendars,    setCalendars]    = useState<CalendarMeta[]>([])
+  const [activeId,     setActiveId]     = useState<string | null>(null)
+  const [regions,      setRegions]      = useState<RegionMeta[]>([])
+  const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [creating,     setCreating]     = useState(false)
+  const [newName,      setNewName]      = useState('')
+  const [newRegion,    setNewRegion]    = useState('')
+  const [editingId,    setEditingId]    = useState<string | null>(null)
+  const [editName,     setEditName]     = useState('')
+  const [regionEditId, setRegionEditId] = useState<string | null>(null)
+  const [typeEditId,   setTypeEditId]   = useState<string | null>(null)
+  const [reloadKey,    setReloadKey]    = useState(0)
   const [year,         setYear]         = useState(today.getFullYear())
   const [search,       setSearch]       = useState('')
   const [selectedId,   setSelectedId]   = useState<string | null>(null)
@@ -164,19 +197,94 @@ export default function CalendarPage() {
   const dragRef    = useRef<{ id: string; startX: number; base: number } | null>(null)
   const liveRef    = useRef<{ id: string; delta: number } | null>(null)
 
+  // Load the user's calendars + region list once.
   useEffect(() => {
-    api.get<CropWindow[]>('/api/calendar')
+    Promise.all([
+      api.get<CalendarMeta[]>('/api/calendars'),
+      api.get<RegionMeta[]>('/api/regions').catch(() => ({ data: [] as RegionMeta[] })),
+    ])
+      .then(([cs, rs]) => {
+        setCalendars(cs.data)
+        setRegions(rs.data)
+        const stored = localStorage.getItem('activeCalendarId')
+        const pick = cs.data.find(c => c.id === stored) ?? cs.data[0]
+        if (pick) setActiveId(pick.id)
+        else setLoading(false)   // user has no calendars yet
+      })
+      .catch(e => { setError(e?.response?.data?.detail ?? 'Помилка завантаження'); setLoading(false) })
+  }, [])
+
+  // (Re)load windows whenever the active calendar changes.
+  useEffect(() => {
+    if (!activeId) return
+    localStorage.setItem('activeCalendarId', activeId)
+    setLoading(true)
+    api.get<CropWindow[]>(`/api/calendars/${activeId}/windows`)
       .then(r => setWindows(r.data))
       .catch(e => setError(e?.response?.data?.detail ?? 'Помилка завантаження'))
       .finally(() => setLoading(false))
-    api.get<{ crops: { crop_id: string; pct: number }[] }>('/api/gdd/me')
+    api.get<{ crops: { crop_id: string; pct: number }[] }>(`/api/gdd/me?calendar_id=${activeId}`)
       .then(r => {
         const m: Record<string, number> = {}
         for (const c of r.data.crops) m[c.crop_id] = c.pct
         setGddMap(m)
       })
       .catch(() => {})
-  }, [])
+  }, [activeId, reloadKey])
+
+  const activeCal = calendars.find(c => c.id === activeId) ?? null
+
+  async function changeRegion(c: CalendarMeta, regionId: string) {
+    if (!regionId || regionId === c.region_id) return
+    const r = await api.patch<CalendarMeta>(`/api/calendars/${c.id}`, { region_id: regionId })
+    setCalendars(p => p.map(x => (x.id === c.id ? r.data : x)))
+    if (c.id === activeId) setReloadKey(k => k + 1)   // dates depend on region
+  }
+
+  async function changeType(c: CalendarMeta, calType: string) {
+    if (calType === c.calendar_type) return
+    const r = await api.patch<CalendarMeta>(`/api/calendars/${c.id}`, { calendar_type: calType })
+    setCalendars(p => p.map(x => (x.id === c.id ? r.data : x)))
+  }
+
+  async function createCalendar() {
+    try {
+      const r = await api.post<CalendarMeta>('/api/calendars', {
+        name: newName.trim() || 'Новий календар',
+        region_id: newRegion || activeCal?.region_id || null,
+      })
+      setCalendars(p => [...p, r.data])
+      setActiveId(r.data.id)
+      setCreating(false); setSwitcherOpen(false); setNewName(''); setNewRegion('')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Не вдалось створити календар')
+    }
+  }
+
+  function startRename(c: CalendarMeta) {
+    setEditingId(c.id)
+    setEditName(c.name)
+  }
+
+  async function commitRename() {
+    if (!editingId) return
+    const id = editingId
+    const name = editName.trim()
+    setEditingId(null)
+    if (!name || name === calendars.find(c => c.id === id)?.name) return
+    const r = await api.patch<CalendarMeta>(`/api/calendars/${id}`, { name })
+    setCalendars(p => p.map(c => (c.id === id ? r.data : c)))
+  }
+
+  async function deleteCalendar() {
+    if (!activeId || calendars.length <= 1) return
+    if (!window.confirm(`Видалити календар «${activeCal?.name}»?`)) return
+    await api.delete(`/api/calendars/${activeId}`)
+    const rest = calendars.filter(c => c.id !== activeId)
+    setCalendars(rest)
+    setSwitcherOpen(false)
+    setActiveId(rest[0]?.id ?? null)
+  }
 
   useEffect(() => {
     setMoonData(Array.from({ length: 12 }, (_, m) => getMonthMoonDays(year, m)))
@@ -244,9 +352,10 @@ export default function CalendarPage() {
   if (error) return (
     <div className="max-w-xl mx-auto px-6 py-16 text-center text-red-600">{error}</div>
   )
-  if (windows.length === 0) return (
+  if (calendars.length === 0) return (
     <div className="max-w-xl mx-auto px-6 py-16 text-center text-gray-500">
-      Оберіть культури в <Link to="/onboarding" className="text-forest underline">налаштуваннях</Link>
+      Ще немає календарів. Завершіть{' '}
+      <Link to="/onboarding" className="text-forest underline">налаштування</Link>, щоб створити перший.
     </div>
   )
 
@@ -333,7 +442,17 @@ export default function CalendarPage() {
             <button onClick={() => setYear(y => y + 1)}
               className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 text-lg">›</button>
           </div>
-          <span className="text-xs text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1">12 місяців</span>
+          {/* Calendar panel toggle */}
+          <button
+            onClick={() => setSwitcherOpen(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold border rounded-lg transition-colors ml-1 max-w-[220px] ${
+              switcherOpen ? 'border-forest bg-forest text-white' : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+            }`}
+          >
+            <span>📅</span>
+            <span className="truncate">{activeCal?.name ?? 'Календарі'}</span>
+            {activeCal?.region_name && <span className={`hidden md:inline ${switcherOpen ? 'text-white/70' : 'text-gray-400'}`}>· {activeCal.region_name}</span>}
+          </button>
 
           <button
             onClick={() => setShowMoon(v => !v)}
@@ -374,10 +493,10 @@ export default function CalendarPage() {
 
         {/* Scrollable grid */}
         <div className="flex-1 overflow-auto">
-          <div style={{ minWidth: gridMinW }}>
+          <div className="min-h-full flex flex-col" style={{ minWidth: gridMinW }}>
 
             {/* ── Day number header — sticky top ─────────────────────── */}
-            <div className="sticky top-0 z-30 flex border-b-2 border-gray-300 bg-white shadow-sm">
+            <div className="shrink-0 sticky top-0 z-30 flex border-b-2 border-gray-300 bg-white shadow-sm">
               <div className="shrink-0 border-r border-gray-200 bg-white" style={{ width: LABEL_W }} />
               <div className="flex">
                 {Array.from({ length: 31 }, (_, i) => (
@@ -414,8 +533,8 @@ export default function CalendarPage() {
               const monthMoon = moonData[month] ?? []
 
               return (
-                <div key={month} className={`flex border-b ${isCurrent ? 'border-forest/30' : 'border-gray-100'}`}
-                  style={{ height: rowH }}>
+                <div key={month} className={`flex flex-1 border-b ${isCurrent ? 'border-forest/30' : 'border-gray-100'}`}
+                  style={{ minHeight: rowH }}>
 
                   {/* Month label — sticky left */}
                   <div className={`shrink-0 sticky left-0 z-10 flex flex-col items-end justify-start pr-3 pt-1.5 border-r border-gray-200 ${isCurrent ? 'bg-amber-50' : 'bg-white'}`}
@@ -427,7 +546,7 @@ export default function CalendarPage() {
                   </div>
 
                   {/* Day grid */}
-                  <div className="flex-1 relative" style={{ height: rowH }}>
+                  <div className="flex-1 relative" style={{ minHeight: rowH }}>
 
                     {/* Cell backgrounds */}
                     <div className="absolute inset-0 flex pointer-events-none">
@@ -527,7 +646,7 @@ export default function CalendarPage() {
             })}
 
             {/* Month names footer */}
-            <div className="flex border-t border-gray-200 bg-white/80">
+            <div className="shrink-0 flex border-t border-gray-200 bg-white/80">
               <div style={{ width: LABEL_W }} className="shrink-0 border-r border-gray-200" />
               <div className="flex-1 px-4 py-2 flex flex-wrap gap-x-6 gap-y-1">
                 {MONTHS_FULL.map((m, i) => (
@@ -538,6 +657,148 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Right calendar panel (Seedtime-style) ─────────────────────── */}
+      <aside className={`flex-none bg-white border-l border-gray-200 overflow-hidden transition-all duration-200 ${switcherOpen ? 'w-72' : 'w-0'}`}>
+        <div className="w-72 h-full flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+            <span className="font-black text-xs uppercase tracking-wide text-gray-700">Мої календарі</span>
+            <button onClick={() => setSwitcherOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+            {calendars.map(c => (
+              <div key={c.id}
+                onClick={() => setActiveId(c.id)}
+                className={`rounded-xl border-2 p-3 cursor-pointer transition-colors ${
+                  c.id === activeId ? 'border-forest bg-forest/5' : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs ${c.id === activeId ? 'text-forest' : 'text-gray-300'}`}>●</span>
+                  {editingId === c.id ? (
+                    <>
+                      <input
+                        autoFocus value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                        onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditingId(null) }}
+                        onBlur={() => setEditingId(null)}
+                        className="flex-1 min-w-0 text-sm font-semibold px-1.5 py-0.5 border border-forest rounded-md focus:outline-none"
+                      />
+                      <button
+                        onMouseDown={e => { e.preventDefault(); e.stopPropagation(); commitRename() }}
+                        title="Зберегти"
+                        className="shrink-0 w-6 h-6 rounded-md bg-forest text-white flex items-center justify-center hover:bg-forest-dark text-sm leading-none"
+                      >
+                        ✓
+                      </button>
+                    </>
+                  ) : (
+                    <span className={`flex-1 text-sm font-semibold truncate ${c.id === activeId ? 'text-forest' : 'text-gray-700'}`}>{c.name}</span>
+                  )}
+                </div>
+                {/* Non-active: static region · count */}
+                {editingId !== c.id && c.id !== activeId && (
+                  <div className="text-xs text-gray-400 mt-1 pl-5">{c.region_name ?? 'Без регіону'} · {c.variety_count} культур</div>
+                )}
+
+                {/* Active: editable region select + count */}
+                {c.id === activeId && editingId !== c.id && (
+                  <div className="mt-2 pl-5 space-y-2" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-2">
+                      {regionEditId === c.id ? (
+                        <select
+                          autoFocus
+                          value={c.region_id ?? ''}
+                          onChange={e => { changeRegion(c, e.target.value); setRegionEditId(null) }}
+                          onBlur={() => setRegionEditId(null)}
+                          className="flex-1 min-w-0 text-xs px-2 py-1 border border-forest rounded-lg bg-white focus:outline-none"
+                        >
+                          {!c.region_id && <option value="" disabled>Оберіть регіон</option>}
+                          {regions.map(r => <option key={r.id} value={r.id}>{r.region}</option>)}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => setRegionEditId(c.id)}
+                          className="flex-1 min-w-0 text-left text-xs text-gray-500 hover:text-forest truncate"
+                          title="Змінити регіон"
+                        >
+                          📍 {c.region_name ?? 'Оберіть регіон'}
+                        </button>
+                      )}
+                      <span className="text-xs text-gray-400 shrink-0">{c.variety_count} культур</span>
+                    </div>
+
+                    {/* Calendar type — label, becomes select on click */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 shrink-0">Тип:</span>
+                      {typeEditId === c.id ? (
+                        <select
+                          autoFocus
+                          value={c.calendar_type}
+                          onChange={e => { changeType(c, e.target.value); setTypeEditId(null) }}
+                          onBlur={() => setTypeEditId(null)}
+                          className="flex-1 min-w-0 text-xs px-2 py-1 border border-forest rounded-lg bg-white focus:outline-none"
+                        >
+                          <option value="horod">🥕 Город</option>
+                          <option value="sad">🌸 Сад</option>
+                          <option value="mixed">🌿 Змішаний</option>
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => setTypeEditId(c.id)}
+                          className="flex-1 min-w-0 text-left text-xs text-gray-500 hover:text-forest truncate"
+                          title="Змінити тип календаря"
+                        >
+                          {CAL_TYPE_LABELS[c.calendar_type] ?? c.calendar_type}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button onClick={e => { e.stopPropagation(); startRename(c) }} className="text-xs text-gray-500 hover:text-forest">Перейменувати</button>
+                      {calendars.length > 1 && (
+                        <button onClick={e => { e.stopPropagation(); deleteCalendar() }} className="text-xs text-red-500 hover:text-red-600">Видалити</button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-gray-100 p-2 shrink-0">
+            {creating ? (
+              <div className="space-y-2">
+                <input
+                  type="text" autoFocus placeholder="Назва календаря" value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-forest"
+                />
+                <select
+                  value={newRegion} onChange={e => setNewRegion(e.target.value)}
+                  className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-forest bg-white"
+                >
+                  <option value="">Регіон (як активний)</option>
+                  {regions.map(r => <option key={r.id} value={r.id}>{r.region}</option>)}
+                </select>
+                <div className="flex gap-2">
+                  <button onClick={createCalendar} className="flex-1 text-xs font-bold py-2 rounded-lg bg-forest text-white hover:bg-forest-dark">Створити</button>
+                  <button onClick={() => setCreating(false)} className="px-3 text-xs py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">Скасувати</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCreating(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-forest text-white text-sm font-bold hover:bg-forest-dark transition-colors"
+              >
+                <span className="text-base leading-none">+</span> Новий календар
+              </button>
+            )}
+          </div>
+        </div>
+      </aside>
     </div>
   )
 }

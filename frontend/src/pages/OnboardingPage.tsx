@@ -10,11 +10,17 @@ interface Region {
   city: string
 }
 
-interface Crop {
+interface Variety {
   id: string
   name_uk: string
-  name_lat: string
+}
+
+interface Category {
+  id: string
+  name_uk: string
+  name_lat: string | null
   type: 'vegetable' | 'flower' | 'berry' | 'tree' | 'herb'
+  varieties: Variety[]
 }
 
 const PLOT_TYPES = [
@@ -36,37 +42,38 @@ const STEP_LABELS = ['Регіон', 'Тип ділянки', 'Культури'
 interface Profile {
   region_id: string | null
   plot_type: string | null
-  selected_crops: string[] | null
+  selected_varieties: string[] | null
 }
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [regions, setRegions] = useState<Region[]>([])
-  const [crops, setCrops] = useState<Crop[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [regionId, setRegionId] = useState('')
   const [regionSearch, setRegionSearch] = useState('')
   const [plotType, setPlotType] = useState('')
-  const [selectedCrops, setSelectedCrops] = useState<Set<string>>(new Set())
+  const [selectedCrops, setSelectedCrops] = useState<Set<string>>(new Set())   // variety ids
   const [cropFilter, setCropFilter] = useState<string>('all')
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())             // expanded category ids
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     Promise.all([
       api.get<Region[]>('/api/regions'),
-      api.get<Crop[]>('/api/crops'),
+      api.get<Category[]>('/api/categories'),
       api.get<Profile>('/api/users/me').catch(() => ({ data: null })),
     ])
       .then(([rr, cr, pr]) => {
         setRegions(rr.data)
-        setCrops(cr.data)
+        setCategories(cr.data)
 
         const profile = pr.data
         if (profile) {
           if (profile.region_id)    setRegionId(profile.region_id)
           if (profile.plot_type)    setPlotType(profile.plot_type)
-          if (profile.selected_crops?.length) setSelectedCrops(new Set(profile.selected_crops))
+          if (profile.selected_varieties?.length) setSelectedCrops(new Set(profile.selected_varieties))
           // Skip to crops step if region + plot type already configured
           if (profile.region_id && profile.plot_type) setStep(2)
         }
@@ -80,14 +87,32 @@ export default function OnboardingPage() {
     r.city.toLowerCase().includes(regionSearch.toLowerCase())
   )
 
-  const filteredCrops = cropFilter === 'all' ? crops : crops.filter((c) => c.type === cropFilter)
+  const filteredCategories = cropFilter === 'all' ? categories : categories.filter((c) => c.type === cropFilter)
 
-  function toggleCrop(id: string) {
+  function toggleVariety(id: string) {
     setSelectedCrops((prev) => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
+  }
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  // Click a category card: single-variety → toggle it; multi → expand the sorts.
+  function onCategoryClick(cat: Category) {
+    if (cat.varieties.length === 1) toggleVariety(cat.varieties[0].id)
+    else toggleExpanded(cat.id)
+  }
+
+  function selectedCountIn(cat: Category) {
+    return cat.varieties.reduce((n, v) => n + (selectedCrops.has(v.id) ? 1 : 0), 0)
   }
 
   async function handleFinish() {
@@ -245,24 +270,72 @@ export default function OnboardingPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-80 overflow-y-auto">
-              {filteredCrops.map((crop) => {
-                const selected = selectedCrops.has(crop.id)
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-80 overflow-y-auto items-start">
+              {filteredCategories.map((cat) => {
+                const single   = cat.varieties.length === 1
+                const count    = selectedCountIn(cat)
+                const isOpen   = expanded.has(cat.id)
+                const active   = single ? selectedCrops.has(cat.varieties[0]?.id) : count > 0
                 return (
-                  <button
-                    key={crop.id}
-                    onClick={() => toggleCrop(crop.id)}
-                    className={`text-left px-3 py-2.5 rounded-xl border-2 transition-colors ${
-                      selected
-                        ? 'border-forest bg-forest/5'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                  <div
+                    key={cat.id}
+                    className={`rounded-xl border-2 transition-colors ${
+                      active ? 'border-forest bg-forest/5' : 'border-gray-200 bg-white'
                     }`}
                   >
-                    <span className="mr-1.5">{CROP_TYPE_ICONS[crop.type]}</span>
-                    <span className={`text-sm font-medium ${selected ? 'text-forest' : 'text-gray-700'}`}>
-                      {crop.name_uk}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => onCategoryClick(cat)}
+                      className="w-full text-left px-3 py-2.5 flex items-center gap-1.5"
+                    >
+                      <span>{CROP_TYPE_ICONS[cat.type]}</span>
+                      <span className={`text-sm font-medium flex-1 ${active ? 'text-forest' : 'text-gray-700'}`}>
+                        {cat.name_uk}
+                      </span>
+                      {!single && (
+                        <span className="flex items-center gap-1 shrink-0">
+                          {count > 0 && (
+                            <span className="text-xs font-bold text-forest bg-forest/10 rounded-full px-1.5">{count}</span>
+                          )}
+                          <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Sorts — slide-down via grid-rows trick */}
+                    {!single && (
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateRows: isOpen ? '1fr' : '0fr',
+                          transition: 'grid-template-rows 0.25s ease',
+                        }}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="px-2 pb-2 pt-0.5 flex flex-wrap gap-1.5 border-t border-forest/10">
+                            {cat.varieties.map((v) => {
+                              const vSel = selectedCrops.has(v.id)
+                              return (
+                                <button
+                                  key={v.id}
+                                  onClick={() => toggleVariety(v.id)}
+                                  className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
+                                    vSel
+                                      ? 'border-forest bg-forest text-white'
+                                      : 'border-gray-200 bg-white text-gray-600 hover:border-forest/40'
+                                  }`}
+                                >
+                                  {v.name_uk}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
