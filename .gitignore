@@ -1,5 +1,6 @@
 .agents/
 skills-lock.json
+.claude
 
 # macOS
 .DS_Store
