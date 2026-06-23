@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'react-hot-toast'
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
+import * as L from 'leaflet'
 import {
   ArrowLeft, Sprout, MapPin, Tags, Phone, Images,
   UploadCloud, X, Loader2, Check, Search,
@@ -44,6 +46,30 @@ interface PhotoItem {
 }
 
 interface GeoResult { lat: string; lon: string; display_name: string }
+
+/* ─── Map picker helpers ─────────────────────────────────────────────────── */
+
+const UA_CENTER: [number, number] = [49.0, 32.0]
+
+const PIN_ICON = L.divIcon({
+  html: '<div style="font-size:30px;line-height:1;transform:translateY(-2px);filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">📍</div>',
+  className: '',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+})
+
+function MapClick({ onPick }: { onPick: (lat: number, lon: number) => void }) {
+  useMapEvents({ click: e => onPick(e.latlng.lat, e.latlng.lng) })
+  return null
+}
+
+function Recenter({ lat, lon }: { lat: number | null; lon: number | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (lat !== null && lon !== null) map.flyTo([lat, lon], 14, { duration: 0.8 })
+  }, [lat, lon, map])
+  return null
+}
 
 /* ─── Reusable card shell ────────────────────────────────────────────────── */
 
@@ -123,6 +149,20 @@ export default function NurseryRegisterPage() {
     } finally {
       setGeoLoading(false)
     }
+  }
+
+  /* ── Pick a point on the map → set coords + reverse-geocode the address ── */
+  async function pickPoint(la: number, lo: number) {
+    setLat(la); setLon(lo)
+    try {
+      const d = await (await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${la}&lon=${lo}&format=json&accept-language=uk`,
+      )).json()
+      if (d.display_name) {
+        setValue('address', d.display_name, { shouldValidate: true })
+        setGeoMsg(`✓ ${d.display_name}`)
+      }
+    } catch { /* keep manual coords even if reverse-geocode fails */ }
   }
 
   /* ── Photos ── */
@@ -246,14 +286,13 @@ export default function NurseryRegisterPage() {
         </Card>
 
         {/* ── Card 2: Локація ── */}
-        <Card icon={<MapPin className="w-5 h-5" />} title="Локація" hint="Знайдіть адресу на карті">
+        <Card icon={<MapPin className="w-5 h-5" />} title="Локація" hint="Знайдіть адресу або вкажіть точку на карті">
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             Адреса <span className="text-red-400">*</span>
           </label>
           <div className="flex gap-2">
             <input
               {...register('address')}
-              onChange={e => { register('address').onChange(e); setGeoMsg('') }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); geocode() } }}
               placeholder="вул. Садова, 12, Київ"
               className={inputBase}
@@ -268,19 +307,29 @@ export default function NurseryRegisterPage() {
           {geoMsg && (
             <p className={`mt-2 text-xs ${geoMsg.startsWith('✓') ? 'text-forest' : 'text-amber-600'}`}>{geoMsg}</p>
           )}
+
+          {/* Interactive picker: click or drag the marker to set the exact point */}
+          <p className="mt-3 mb-1.5 text-xs text-gray-400">📍 Натисніть на карту або перетягніть маркер, щоб уточнити місце</p>
+          <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: 280 }}>
+            <MapContainer center={UA_CENTER} zoom={5} style={{ height: '100%', width: '100%' }}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <MapClick onPick={pickPoint} />
+              <Recenter lat={lat} lon={lon} />
+              {lat !== null && lon !== null && (
+                <Marker
+                  position={[lat, lon]}
+                  icon={PIN_ICON}
+                  draggable
+                  eventHandlers={{ dragend: e => { const m = e.target.getLatLng(); pickPoint(m.lat, m.lng) } }}
+                />
+              )}
+            </MapContainer>
+          </div>
           {lat !== null && lon !== null && (
-            <div className="flex gap-3 mt-3">
-              <div className="flex-1">
-                <label className="text-xs text-gray-400 block mb-1">Широта</label>
-                <input type="number" step="any" value={lat} onChange={e => setLat(parseFloat(e.target.value))}
-                  className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:border-forest" />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-gray-400 block mb-1">Довгота</label>
-                <input type="number" step="any" value={lon} onChange={e => setLon(parseFloat(e.target.value))}
-                  className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:border-forest" />
-              </div>
-            </div>
+            <p className="mt-2 text-xs text-gray-400 font-mono">{lat.toFixed(5)}, {lon.toFixed(5)}</p>
           )}
         </Card>
 
