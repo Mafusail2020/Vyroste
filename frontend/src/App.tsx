@@ -20,6 +20,9 @@ import BlogPage from './pages/BlogPage'
 import BlogPostPage from './pages/BlogPostPage'
 import AboutPage from './pages/AboutPage'
 import CabinetPage from './pages/CabinetPage'
+import AdminKnowledgePage from './pages/AdminKnowledgePage'
+import KnowledgePage from './pages/KnowledgePage'
+import ArticlePage from './pages/ArticlePage'
 
 export default function App() {
   return (
@@ -45,6 +48,8 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />
+          <Route path="/knowledge" element={<KnowledgePage />} />
+          <Route path="/knowledge/:slug" element={<ArticlePage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
@@ -54,6 +59,7 @@ export default function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/nurseries/register" element={<NurseryRegisterPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/knowledge" element={<AdminKnowledgePage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/payment/success" element={<PaymentSuccessPage />} />
           </Route>

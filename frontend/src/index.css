@@ -20,3 +20,49 @@ body {
   -webkit-font-smoothing: antialiased;
   background-color: #F5F3EC;
 }
+
+/* Rich article content — shared by the TipTap editor and the reading view. */
+.prose-article {
+  color: #374151;
+  line-height: 1.75;
+  font-size: 1rem;
+}
+.prose-article h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 1.8rem 0 0.8rem;
+  scroll-margin-top: 5rem;
+}
+.prose-article h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 1.4rem 0 0.6rem;
+  scroll-margin-top: 5rem;
+}
+.prose-article p { margin: 0.85rem 0; }
+.prose-article ul, .prose-article ol { margin: 0.85rem 0; padding-left: 1.5rem; }
+.prose-article ul { list-style: disc; }
+.prose-article ol { list-style: decimal; }
+.prose-article li { margin: 0.3rem 0; }
+.prose-article a { color: #2B6117; text-decoration: underline; }
+.prose-article blockquote {
+  border-left: 3px solid #BBE3BB;
+  padding-left: 1rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 1rem 0;
+}
+.prose-article img { border-radius: 0.75rem; margin: 1rem 0; max-width: 100%; }
+.prose-article code {
+  background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 0.3rem;
+  font-size: 0.9em;
+}
+.prose-article .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

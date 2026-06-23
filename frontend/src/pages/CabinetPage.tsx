@@ -20,6 +20,7 @@ interface Region {
 interface SavedArticle {
   article_id: string
   created_at: string
+  article: { title: string; slug: string; cover_image: string | null } | null
 }
 
 const PLOT_TYPES = [
@@ -167,12 +168,21 @@ export default function CabinetPage() {
         ) : (
           <div className="space-y-2">
             {saved.map(s => (
-              <div key={s.article_id} className="flex items-center justify-between bg-white rounded-xl border border-gray-100 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">Стаття {s.article_id.slice(0, 8)}</p>
+              <div key={s.article_id} className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3">
+                {s.article?.cover_image
+                  ? <img src={s.article.cover_image} alt="" className="w-11 h-11 rounded-lg object-cover shrink-0" />
+                  : <div className="w-11 h-11 rounded-lg bg-card-green flex items-center justify-center shrink-0">🔖</div>}
+                <div className="min-w-0 flex-1">
+                  {s.article ? (
+                    <Link to={`/knowledge/${s.article.slug}`} className="text-sm font-semibold text-gray-800 hover:text-forest truncate block">
+                      {s.article.title}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-medium text-gray-400 truncate">Статтю видалено</p>
+                  )}
                   <p className="text-xs text-gray-400">Збережено {new Date(s.created_at).toLocaleDateString('uk-UA')}</p>
                 </div>
-                <button onClick={() => unsave(s.article_id)} className="text-xs text-red-500 hover:text-red-600 shrink-0 ml-3">
+                <button onClick={() => unsave(s.article_id)} className="text-xs text-red-500 hover:text-red-600 shrink-0">
                   Видалити
                 </button>
               </div>
