@@ -66,10 +66,17 @@ const TASK_H   = 22   // px task bar height
 const TASK_GAP = 2    // px gap between bars
 const TOP_PAD  = 4    // px top padding in row
 const MOON_H   = 16   // px moon strip height
+const WD_H     = 11   // px weekday-initial band at top of each cell (keep bars/moon below it)
 
 const MONTHS_SHORT = ['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру']
-const MONTHS_FULL  = ['Січень','Лютий','Березень','Квітень','Травень','Червень',
-                      'Липень','Серпень','Вересень','Жовтень','Листопад','Грудень']
+
+// Indexed by Date.getDay() (0 = Sunday … 6 = Saturday).
+const WEEKDAY_UK = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб']
+
+// Shared toolbar button styling so every control reads as one family.
+const BTN_BASE   = 'px-3 py-1 text-xs font-semibold border rounded-lg transition-colors'
+const BTN_REST   = 'border-gray-300 text-gray-700 hover:bg-gray-50'
+const BTN_ACTIVE = 'border-forest bg-forest text-white'
 
 const TASK_CFG: Record<TaskType, { label: string; icon: string; bg: string; fg: string }> = {
   seeding:       { label: 'Посів (розсада)',    icon: '🌱', bg: '#FDE68A', fg: '#78350F' },
@@ -167,6 +174,7 @@ function assignLanes(segs: Omit<Segment, 'lane'>[]): Segment[] {
 
 export default function CalendarPage() {
   const today = new Date()
+  const todayYear = today.getFullYear()
 
   const [windows,      setWindows]      = useState<CropWindow[]>([])
   const [loading,      setLoading]      = useState(true)
@@ -194,9 +202,17 @@ export default function CalendarPage() {
   const [moonData,     setMoonData]     = useState<MoonDay[][]>([])
   const [gddMap,       setGddMap]       = useState<Record<string, number>>({})
   const [liveOff,      setLiveOff]      = useState<{ id: string; delta: number } | null>(null)
+  const [hoveredCrop,  setHoveredCrop]  = useState<string | null>(null)
+  const [showDragHint, setShowDragHint] = useState(() => !localStorage.getItem('calDragHintSeen'))
+  const [monthInView,  setMonthInView]  = useState(true)
 
-  const dragRef    = useRef<{ id: string; startX: number; base: number } | null>(null)
-  const liveRef    = useRef<{ id: string; delta: number } | null>(null)
+  const dragRef     = useRef<{ id: string; startX: number; base: number } | null>(null)
+  const liveRef     = useRef<{ id: string; delta: number } | null>(null)
+  const scrollRef   = useRef<HTMLDivElement>(null)
+  const todayRowRef = useRef<HTMLDivElement>(null)
+  const activeIdRef = useRef<string | null>(null)   // current id for the drag handler (stable closure)
+
+  const offsetsKey = (id: string) => `calOffsets:${id}`
 
   // Load the user's calendars + region list once.
   useEffect(() => {
@@ -219,6 +235,10 @@ export default function CalendarPage() {
   useEffect(() => {
     if (!activeId) return
     localStorage.setItem('activeCalendarId', activeId)
+    activeIdRef.current = activeId
+    // Restore this calendar's saved date shifts (auto-saved per calendar).
+    try { setCropOffsets(JSON.parse(localStorage.getItem(offsetsKey(activeId)) || '{}')) }
+    catch { setCropOffsets({}) }
     setLoading(true)
     api.get<CropWindow[]>(`/api/calendars/${activeId}/windows`)
       .then(r => setWindows(r.data))
@@ -296,6 +316,31 @@ export default function CalendarPage() {
     setMoonData(Array.from({ length: 12 }, (_, m) => getMonthMoonDays(year, m)))
   }, [year])
 
+  // Float a "today" button whenever the current month row is scrolled out of
+  // view (or we're browsing a different year).
+  useEffect(() => {
+    if (year !== todayYear) return            // different year: no current-month row to watch
+    const el = todayRowRef.current
+    const root = scrollRef.current
+    if (!el || !root) return
+    const obs = new IntersectionObserver(
+      ([entry]) => setMonthInView(entry.isIntersecting),
+      { root, threshold: 0.2 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [year, todayYear, windows, showMoon, loading])
+
+  function goToToday() {
+    const cy = today.getFullYear()
+    if (year !== cy) {
+      setYear(cy)
+      setTimeout(() => todayRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60)
+    } else {
+      todayRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!dragRef.current) return
@@ -308,7 +353,11 @@ export default function CalendarPage() {
       if (!dragRef.current) return
       if (liveRef.current) {
         const { id, delta } = liveRef.current
-        setCropOffsets(p => ({ ...p, [id]: delta }))
+        setCropOffsets(p => {
+          const next = { ...p, [id]: delta }
+          if (activeIdRef.current) localStorage.setItem(offsetsKey(activeIdRef.current), JSON.stringify(next))
+          return next
+        })
       }
       dragRef.current = null
       liveRef.current = null
@@ -323,6 +372,7 @@ export default function CalendarPage() {
     e.preventDefault()
     const base = liveOff?.id === cropId ? liveOff.delta : (cropOffsets[cropId] ?? 0)
     dragRef.current = { id: cropId, startX: e.clientX, base }
+    if (showDragHint) { setShowDragHint(false); localStorage.setItem('calDragHintSeen', '1') }
   }
 
   function effectiveOffset(cropId: string) {
@@ -366,6 +416,7 @@ export default function CalendarPage() {
   )
 
   const gridMinW = LABEL_W + 31 * DAY_W
+  const showTodayFab = year !== todayYear || !monthInView
 
   /* ── Render ───────────────────────────────────────────────────────────── */
   return (
@@ -398,17 +449,28 @@ export default function CalendarPage() {
             {/* Crop list */}
             <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
               <p className="text-xs text-gray-400 px-2 py-1 uppercase tracking-wide">Групи за роком</p>
-              {visible.map(w => (
-                <button key={w.crop_id}
-                  onClick={() => setSelectedId(selectedId === w.crop_id ? null : w.crop_id)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-xs transition-colors ${selectedId === w.crop_id ? 'bg-forest/10 text-forest' : 'hover:bg-gray-50 text-gray-700'}`}
-                >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CROP_COLORS[w.crop_type] ?? '#2B6117' }} />
-                  <span className="truncate font-medium">{w.crop_name}</span>
-                  {w.lunar_preference === 'above_ground' && <span className="ml-auto text-gray-400">🌒</span>}
-                  {w.lunar_preference === 'below_ground' && <span className="ml-auto text-gray-400">🌘</span>}
-                </button>
-              ))}
+              {visible.map(w => {
+                const active = selectedId === w.crop_id || hoveredCrop === w.crop_id
+                return (
+                  <button key={w.crop_id}
+                    onClick={() => setSelectedId(selectedId === w.crop_id ? null : w.crop_id)}
+                    onMouseEnter={() => setHoveredCrop(w.crop_id)}
+                    onMouseLeave={() => setHoveredCrop(null)}
+                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-xs transition-colors ${active ? 'bg-forest/10 text-forest' : 'hover:bg-gray-50 text-gray-700'}`}
+                  >
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CROP_COLORS[w.crop_type] ?? '#2B6117' }} />
+                    <span className="truncate font-medium">{w.crop_name}</span>
+                    {w.lunar_preference === 'above_ground' && <span className="ml-auto text-gray-400" title="Сприятливі наземні (надземні) дні">🌒</span>}
+                    {w.lunar_preference === 'below_ground' && <span className="ml-auto text-gray-400" title="Сприятливі підземні (кореневі) дні">🌘</span>}
+                  </button>
+                )
+              })}
+              {/* Lunar-icon legend */}
+              {visible.some(w => w.lunar_preference === 'above_ground' || w.lunar_preference === 'below_ground') && (
+                <p className="px-2 pt-1 text-[10px] text-gray-400 leading-snug">
+                  🌒 наземні · 🌘 підземні культури
+                </p>
+              )}
               <Link to="/crops/add" className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-forest hover:bg-forest/5 rounded-lg">
                 <span className="font-bold text-lg leading-none">+</span>
                 <span>Додати культуру</span>
@@ -417,7 +479,17 @@ export default function CalendarPage() {
 
             {/* Task type filter */}
             <div className="border-t border-gray-100 px-2 py-2 space-y-0.5 shrink-0">
-              <p className="text-xs text-gray-400 px-2 mb-1.5 uppercase tracking-wide">Фільтр задач</p>
+              <div className="flex items-center justify-between px-2 mb-1.5">
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Фільтр задач</p>
+                <button
+                  onClick={() => setHiddenTypes(prev =>
+                    prev.size > 0 ? new Set() : new Set(Object.keys(TASK_CFG) as TaskType[])
+                  )}
+                  className="text-[10px] font-semibold text-forest hover:underline"
+                >
+                  {hiddenTypes.size > 0 ? 'Показати всі' : 'Сховати всі'}
+                </button>
+              </div>
               {(Object.entries(TASK_CFG) as [TaskType, typeof TASK_CFG[TaskType]][]).map(([type, cfg]) => (
                 <button key={type}
                   onClick={() => setHiddenTypes(prev => { const n = new Set(prev); n.has(type) ? n.delete(type) : n.add(type); return n })}
@@ -433,38 +505,34 @@ export default function CalendarPage() {
       </aside>
 
       {/* ── Main ──────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="relative flex-1 flex flex-col overflow-hidden">
 
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-200 shrink-0">
-          <button onClick={() => setYear(today.getFullYear())}
-            className="px-3 py-1 text-xs font-semibold border border-gray-300 rounded-lg hover:bg-gray-50">
-            Сьогодні
-          </button>
-          <div className="flex items-center gap-1">
+          <div className={`${BTN_BASE} ${BTN_REST} flex items-center gap-1 px-1`}>
             <button onClick={() => setYear(y => y - 1)}
-              className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 text-lg">‹</button>
-            <span className="font-bold text-gray-800 w-12 text-center text-sm">{year}</span>
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 text-lg leading-none">‹</button>
+            <span className="font-bold text-gray-800 w-10 text-center text-sm">{year}</span>
             <button onClick={() => setYear(y => y + 1)}
-              className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 text-lg">›</button>
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 text-lg leading-none">›</button>
           </div>
           {/* Calendar panel toggle */}
           <button
             onClick={() => setSwitcherOpen(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold border rounded-lg transition-colors ml-1 max-w-[220px] ${
-              switcherOpen ? 'border-forest bg-forest text-white' : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-            }`}
+            className={`${BTN_BASE} ml-1 flex items-center gap-1.5 ${switcherOpen ? BTN_ACTIVE : BTN_REST}`}
           >
-            <span>📅</span>
-            <span className="truncate">{activeCal?.name ?? 'Календарі'}</span>
-            {activeCal?.region_name && <span className={`hidden md:inline ${switcherOpen ? 'text-white/70' : 'text-gray-400'}`}>· {activeCal.region_name}</span>}
+            <span className="shrink-0">📅</span>
+            <span className="truncate shrink-0 max-w-[180px]">{activeCal?.name ?? 'Календарі'}</span>
+            {activeCal?.region_name && (
+              <span className={`hidden lg:inline truncate shrink-0 max-w-[130px] font-normal ${switcherOpen ? 'text-white/70' : 'text-gray-400'}`}>
+                · {activeCal.region_name}
+              </span>
+            )}
           </button>
 
           <button
             onClick={() => setShowMoon(v => !v)}
-            className={`px-3 py-1 text-xs font-semibold border rounded-lg transition-colors ${
-              showMoon ? 'border-forest bg-forest text-white' : 'border-gray-300 hover:bg-gray-50 text-gray-600'
-            }`}
+            className={`${BTN_BASE} ${showMoon ? BTN_ACTIVE : BTN_REST}`}
           >
             🌙 Місяць
           </button>
@@ -487,9 +555,15 @@ export default function CalendarPage() {
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-gray-400 hidden sm:block">✋ Тягніть смугу для зміщення дат</span>
+            {showDragHint && (
+              <span className="text-xs text-gray-400 hidden sm:flex items-center gap-1.5">
+                ✋ Тягніть смугу для зміщення дат
+                <button onClick={() => { setShowDragHint(false); localStorage.setItem('calDragHintSeen', '1') }}
+                  className="text-gray-300 hover:text-gray-500 leading-none" title="Сховати підказку">×</button>
+              </span>
+            )}
             {Object.keys(cropOffsets).length > 0 && (
-              <button onClick={() => setCropOffsets({})}
+              <button onClick={() => { setCropOffsets({}); if (activeId) localStorage.removeItem(offsetsKey(activeId)) }}
                 className="text-xs px-2.5 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-500">
                 Скинути
               </button>
@@ -498,23 +572,26 @@ export default function CalendarPage() {
         </div>
 
         {/* Scrollable grid */}
-        <div className="flex-1 overflow-auto">
+        <div ref={scrollRef} className="flex-1 overflow-auto">
           <div className="min-h-full flex flex-col" style={{ minWidth: gridMinW }}>
 
             {/* ── Day number header — sticky top ─────────────────────── */}
             <div className="shrink-0 sticky top-0 z-30 flex border-b-2 border-gray-300 bg-white shadow-sm">
               <div className="shrink-0 border-r border-gray-200 bg-white" style={{ width: LABEL_W }} />
               <div className="flex">
-                {Array.from({ length: 31 }, (_, i) => (
-                  <div key={i + 1}
-                    className={`border-l border-gray-100 text-center py-1 ${
-                      today.getFullYear() === year && today.getDate() === i + 1 ? 'bg-yellow-50' : ''
-                    }`}
-                    style={{ width: DAY_W }}
-                  >
-                    <div className="text-xs font-bold text-gray-400">{i + 1}</div>
-                  </div>
-                ))}
+                {Array.from({ length: 31 }, (_, i) => {
+                  const isTodayCol = today.getFullYear() === year && today.getDate() === i + 1
+                  return (
+                    <div key={i + 1}
+                      className={`border-l border-gray-100 text-center py-1 ${isTodayCol ? 'bg-forest/10' : ''}`}
+                      style={{ width: DAY_W }}
+                    >
+                      {isTodayCol
+                        ? <div className="mx-auto w-5 h-5 rounded-full bg-forest text-white text-xs font-bold flex items-center justify-center leading-none">{i + 1}</div>
+                        : <div className="text-xs font-bold text-gray-400">{i + 1}</div>}
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
@@ -535,11 +612,12 @@ export default function CalendarPage() {
               const segs    = assignLanes(rawSegs)
               const lanes   = segs.length > 0 ? Math.max(...segs.map(s => s.lane)) + 1 : 0
               const moonOff = showMoon ? MOON_H : 0
-              const rowH    = Math.max(40, TOP_PAD * 2 + moonOff + lanes * (TASK_H + TASK_GAP))
+              const rowH    = Math.max(40, WD_H + TOP_PAD * 2 + moonOff + lanes * (TASK_H + TASK_GAP))
               const monthMoon = moonData[month] ?? []
 
               return (
-                <div key={month} className={`flex flex-1 border-b ${isCurrent ? 'border-forest/30' : 'border-gray-100'}`}
+                <div key={month} ref={isCurrent ? todayRowRef : undefined}
+                  className={`flex flex-1 border-b ${isCurrent ? 'border-forest/30' : 'border-gray-100'}`}
                   style={{ minHeight: rowH }}>
 
                   {/* Month label — sticky left */}
@@ -560,23 +638,40 @@ export default function CalendarPage() {
                         const day     = i + 1
                         const inMonth = day <= days
                         const isToday = isCurrent && day === todayDay
-                        const weekend = inMonth && [0, 6].includes(new Date(year, month, day).getDay())
+                        const dow     = inMonth ? new Date(year, month, day).getDay() : -1
+                        const weekend = dow === 0 || dow === 6
                         return (
-                          <div key={day} style={{ width: DAY_W }}
-                            className={`h-full border-l ${
-                              isToday   ? 'bg-yellow-100 border-yellow-200' :
-                              !inMonth  ? 'bg-gray-100/40 border-gray-50' :
-                              weekend   ? 'bg-gray-50/60 border-gray-100' :
+                          <div key={day}
+                            style={{
+                              width: DAY_W,
+                              ...(!inMonth ? {
+                                backgroundImage:
+                                  'repeating-linear-gradient(45deg, transparent 0 5px, rgba(0,0,0,0.045) 5px 6px)',
+                              } : {}),
+                            }}
+                            className={`relative h-full border-l ${
+                              isToday   ? 'bg-forest/10 border-forest/30' :
+                              !inMonth  ? 'bg-gray-100 border-gray-100' :
+                              weekend   ? 'bg-gray-50 border-gray-100' :
                                           'border-gray-100'
                             }`}
-                          />
+                          >
+                            {inMonth && (
+                              <span
+                                className={`absolute top-px left-0.5 leading-none text-gray-500 opacity-50 ${weekend ? 'font-semibold' : ''}`}
+                                style={{ fontSize: 8 }}
+                              >
+                                {WEEKDAY_UK[dow]}
+                              </span>
+                            )}
+                          </div>
                         )
                       })}
                     </div>
 
                     {/* Moon strip */}
                     {showMoon && (
-                      <div className="absolute inset-x-0 top-0 flex pointer-events-none" style={{ height: MOON_H }}>
+                      <div className="absolute inset-x-0 flex pointer-events-none" style={{ top: WD_H, height: MOON_H }}>
                         {Array.from({ length: 31 }, (_, i) => {
                           const md = monthMoon[i]
                           if (!md) return <div key={i} style={{ width: DAY_W }} className="h-full" />
@@ -615,7 +710,7 @@ export default function CalendarPage() {
                       const cfg      = TASK_CFG[seg.task.type]
                       const left     = (seg.startDay - 1) * DAY_W
                       const width    = Math.max((seg.endDay - seg.startDay + 1) * DAY_W - 1, DAY_W - 1)
-                      const top      = TOP_PAD + moonOff + seg.lane * (TASK_H + TASK_GAP)
+                      const top      = WD_H + TOP_PAD + moonOff + seg.lane * (TASK_H + TASK_GAP)
                       const dragging = dragRef.current?.id === seg.cropId
 
                       const radius = seg.isFirst && seg.isLast ? '4px'
@@ -629,18 +724,33 @@ export default function CalendarPage() {
                       const pref = lunarMap[seg.cropId]
                       const lunarMatch = midMoon && pref && pref !== 'any' && (midMoon.favor as string) === pref
 
+                      // Ripeness (% of GDD to harvest) — only meaningful on harvest bars.
+                      const ripe = seg.task.type === 'harvesting' ? Math.round((gddMap[seg.cropId] ?? 0) * 100) : null
+                      // Crop hover highlight: emphasise the hovered crop, dim the rest.
+                      const dim  = hoveredCrop !== null && hoveredCrop !== seg.cropId
+                      const emph = hoveredCrop === seg.cropId
+
                       return (
                         <div key={seg.task.id + '-' + month}
                           onMouseDown={e => startDrag(e, seg.cropId)}
-                          title={`${seg.cropName}: ${cfg.label}\n${seg.task.start.toLocaleDateString('uk-UA')} – ${seg.task.end.toLocaleDateString('uk-UA')}${lunarMatch ? `\n${midMoon?.icon} Сприятливий місячний день` : ''}`}
-                          className={`absolute flex items-center gap-1 px-1.5 text-xs font-medium overflow-hidden z-10 ${dragging ? 'opacity-70 cursor-grabbing' : 'cursor-grab hover:brightness-95'}`}
-                          style={{ left, width, top, height: TASK_H, borderRadius: radius, backgroundColor: cfg.bg, color: cfg.fg, boxShadow: lunarMatch ? '0 0 0 2px rgba(34,197,94,0.75)' : undefined }}
+                          onMouseEnter={() => setHoveredCrop(seg.cropId)}
+                          onMouseLeave={() => setHoveredCrop(null)}
+                          title={`${seg.cropName}: ${cfg.label}\n${seg.task.start.toLocaleDateString('uk-UA')} – ${seg.task.end.toLocaleDateString('uk-UA')}${ripe ? `\nГотовність до збору: ${ripe}%` : ''}${lunarMatch ? `\n${midMoon?.icon} Сприятливий місячний день` : ''}`}
+                          className={`absolute flex items-center gap-1 px-1.5 text-xs font-medium overflow-hidden z-10 transition-opacity ${dragging ? 'opacity-70 cursor-grabbing' : dim ? 'opacity-30 cursor-grab' : 'cursor-grab hover:brightness-95'}`}
+                          style={{
+                            left, width, top, height: TASK_H, borderRadius: radius,
+                            backgroundColor: cfg.bg, color: cfg.fg,
+                            boxShadow: emph ? '0 0 0 1px rgba(43,97,23,0.9)'
+                              : lunarMatch ? '0 0 0 2px rgba(34,197,94,0.75)'
+                              : undefined,
+                            zIndex: emph ? 20 : undefined,
+                          }}
                         >
                           <span className="shrink-0 leading-none">{cfg.icon}</span>
                           {width > 60 && <span className="truncate leading-none">{seg.cropName} – {cfg.label}</span>}
-                          {seg.task.type === 'harvesting' && gddMap[seg.cropId] !== undefined && width > 90 && (
-                            <span className="ml-auto shrink-0 text-xs font-bold opacity-90 leading-none">
-                              {Math.round(gddMap[seg.cropId] * 100)}%
+                          {ripe !== null && ripe > 0 && width > 90 && (
+                            <span className="ml-auto shrink-0 text-xs font-semibold opacity-90 leading-none" title="Готовність до збору врожаю">
+                              🌡 {ripe}%
                             </span>
                           )}
                         </div>
@@ -651,17 +761,16 @@ export default function CalendarPage() {
               )
             })}
 
-            {/* Month names footer */}
-            <div className="shrink-0 flex border-t border-gray-200 bg-white/80">
-              <div style={{ width: LABEL_W }} className="shrink-0 border-r border-gray-200" />
-              <div className="flex-1 px-4 py-2 flex flex-wrap gap-x-6 gap-y-1">
-                {MONTHS_FULL.map((m, i) => (
-                  <span key={i} className="text-xs text-gray-400">{m}</span>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
+
+        {/* Floating "today" button — appears when current month scrolled away */}
+        {showTodayFab && (
+          <button onClick={goToToday}
+            className="absolute bottom-5 right-5 z-40 flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-forest text-white text-sm font-bold shadow-lg hover:bg-forest-dark transition-colors">
+            <span>📍</span> Сьогодні
+          </button>
+        )}
       </div>
 
       {/* ── Right calendar panel (Seedtime-style) ─────────────────────── */}
@@ -762,10 +871,12 @@ export default function CalendarPage() {
                       )}
                     </div>
 
-                    <div className="flex gap-3">
-                      <button onClick={e => { e.stopPropagation(); startRename(c) }} className="text-xs text-gray-500 hover:text-forest">Перейменувати</button>
+                    <div className="flex items-center justify-between gap-3 pt-2 mt-1 border-t border-gray-100">
+                      <button onClick={e => { e.stopPropagation(); startRename(c) }} className="text-xs font-medium text-gray-500 hover:text-forest">Перейменувати</button>
                       {calendars.length > 1 && (
-                        <button onClick={e => { e.stopPropagation(); deleteCalendar() }} className="text-xs text-red-500 hover:text-red-600">Видалити</button>
+                        <button onClick={e => { e.stopPropagation(); deleteCalendar() }}
+                          className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-1.5 py-0.5 rounded flex items-center gap-1"
+                          title="Видалити календар">🗑 Видалити</button>
                       )}
                     </div>
                   </div>
