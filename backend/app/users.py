@@ -74,7 +74,21 @@ async def list_saved_articles(current_user: dict = Depends(get_current_user)):
         .order("created_at", desc=True)
         .execute()
     )
-    return res.data or []
+    rows = res.data or []
+
+    # Enrich with KB article meta (no FK → merge in Python instead of embed).
+    ids = [r["article_id"] for r in rows]
+    article_map: dict[str, dict] = {}
+    if ids:
+        arts = (
+            sb.table("kb_articles")
+            .select("id, title, slug, cover_image")
+            .in_("id", ids)
+            .execute()
+        )
+        article_map = {a["id"]: a for a in (arts.data or [])}
+
+    return [{**r, "article": article_map.get(r["article_id"])} for r in rows]
 
 
 @router.post("/me/saved-articles/{article_id}", status_code=status.HTTP_201_CREATED)

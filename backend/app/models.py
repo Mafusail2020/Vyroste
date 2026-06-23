@@ -20,6 +20,7 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Enum as SAEnum,
     ForeignKey,
@@ -29,7 +30,7 @@ from sqlalchemy import (
     Text,
     text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.enums import CropType, GrowingMethod, LunarPreference
@@ -37,6 +38,46 @@ from app.enums import CropType, GrowingMethod, LunarPreference
 
 class Base(DeclarativeBase):
     pass
+
+
+class KbCategory(Base):
+    """Knowledge-Base category (Вирощування, Хвороби, ...). 1─many articles."""
+    __tablename__ = "kb_categories"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    emoji: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+
+    articles: Mapped[list[KbArticle]] = relationship(back_populates="category")
+
+
+class KbArticle(Base):
+    """A wiki article. `content` is a TipTap document (JSONB), rendered to HTML
+    on the client. Only published articles are publicly readable."""
+    __tablename__ = "kb_articles"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("kb_categories.id", ondelete="SET NULL"), index=True
+    )
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    excerpt: Mapped[str | None] = mapped_column(Text)
+    content: Mapped[dict] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    cover_image: Mapped[str | None] = mapped_column(Text)
+    tags: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'"))
+    author: Mapped[str | None] = mapped_column(Text, server_default=text("'Виросте'"))
+    published: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    views: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    reading_minutes: Mapped[int] = mapped_column(Integer, server_default=text("1"))
+
+    category: Mapped[KbCategory | None] = relationship(back_populates="articles")
 
 
 class Nursery(Base):
