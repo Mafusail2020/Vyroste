@@ -128,3 +128,19 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
     article_id is a plain uuid — Knowledge Base ships later)
   - `PATCH /api/users/me` (region/plot_type); `GET/POST/DELETE /api/users/me/saved-articles`
   - `CabinetPage.tsx` at `/cabinet` (nav link «Кабінет»): Налаштування + Збережені статті tabs.
+- [x] Slice 17 — Knowledge Base (База знань)
+  - Migration: `backend/migrations/011_knowledge_base.sql` (kb_categories, kb_articles; article
+    `content` is a TipTap doc in JSONB; public read where published).
+  - **Supabase Storage**: create a public bucket `article-images` (admin image uploads land there).
+  - Seed: `python scripts/seed_knowledge.py` (4 categories + sample articles, idempotent).
+  - Backend `app/knowledge.py` (mirrors `blog.py`): public list/get/view + related; admin CRUD
+    (`require_admin`) for articles + categories; `POST /api/knowledge/upload` (image → Storage);
+    `reading_minutes` auto-computed from content; UA-transliterated slugs.
+  - Frontend: TipTap v3 editor (`components/TipTapEditor.tsx`, `lib/tiptap.ts` shared
+    extensions + `renderArticleHtml`/`extractToc`). Admin editor `AdminKnowledgePage.tsx`
+    (`/admin/knowledge`). Reading UI: `KnowledgePage.tsx` (`/knowledge`, 2-col list + sidebar) +
+    `ArticlePage.tsx` (`/knowledge/:slug`, content left; sidebar search/categories + auto TOC +
+    related right; views, reading time, tags, bookmark).
+  - Bookmarks: `BookmarkButton.tsx` → `saved-articles`; cabinet Saved tab resolves real
+    titles/links (users.py merges kb_articles meta — no FK, Python join).
+  - `.prose-article` CSS in `src/index.css` styles both the editor and the reading view.
