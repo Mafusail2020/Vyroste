@@ -136,8 +136,16 @@ export default function MapPage() {
   const [userPos,      setUserPos]      = useState<[number, number] | null>(null)
   const [locating,     setLocating]     = useState(false)
   const [activeId,     setActiveId]     = useState<string | null>(null)
-  const [tagFilter,    setTagFilter]    = useState('')
+  const [tagFilters,   setTagFilters]   = useState<Set<string>>(new Set())
   const [panelWidth,   setPanelWidth]   = useState(384)
+
+  function toggleTag(t: string) {
+    setTagFilters(prev => {
+      const next = new Set(prev)
+      next.has(t) ? next.delete(t) : next.add(t)
+      return next
+    })
+  }
   const resizing = useRef(false)
 
   // Drag the panel's left edge to resize it.
@@ -172,7 +180,7 @@ export default function MapPage() {
   const allTags = [...new Set(nurseries.flatMap(n => n.tags ?? []))].sort()
   const filtered = nurseries.filter(n =>
     (!regionFilter || n.region_id === regionFilter) &&
-    (!tagFilter || (n.tags ?? []).includes(tagFilter))
+    (tagFilters.size === 0 || (n.tags ?? []).some(t => tagFilters.has(t)))
   )
   const selected = activeId
     ? filtered.find(n => n.id === activeId) ?? nurseries.find(n => n.id === activeId) ?? null
@@ -258,17 +266,17 @@ export default function MapPage() {
 
           {allTags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {tagFilter && (
-                <button onClick={() => setTagFilter('')}
+              {tagFilters.size > 0 && (
+                <button onClick={() => setTagFilters(new Set())}
                   className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200">
-                  ✕ скинути
+                  ✕ скинути ({tagFilters.size})
                 </button>
               )}
               {allTags.map(t => (
                 <button key={t}
-                  onClick={() => setTagFilter(tagFilter === t ? '' : t)}
+                  onClick={() => toggleTag(t)}
                   className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                    tagFilter === t
+                    tagFilters.has(t)
                       ? 'bg-forest text-white border-forest'
                       : 'bg-white text-gray-600 border-gray-200 hover:border-forest/40'
                   }`}
@@ -450,9 +458,9 @@ export default function MapPage() {
                 ))}
                 {selected.tags?.map(t => (
                   <button key={`t-${t}`}
-                    onClick={() => setTagFilter(tagFilter === t ? '' : t)}
+                    onClick={() => toggleTag(t)}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                      tagFilter === t ? 'bg-forest text-white border-forest' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-forest/40'
+                      tagFilters.has(t) ? 'bg-forest text-white border-forest' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-forest/40'
                     }`}
                   >
                     {t}
