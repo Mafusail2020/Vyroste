@@ -23,6 +23,32 @@ kharkiv_id = region_id("Харків")
 
 NURSERIES = [
     {
+        "name":        "Розсадник «Квітучий сад» (демо)",
+        "description": "Повний демо-розсадник: декоративні рослини, троянди, хвойні, плодові "
+                       "саджанці та добрива. Власна теплиця, доставка по Україні, консультації "
+                       "агронома щодня. Цей запис заповнений усіма полями — для перегляду панелі.",
+        "address":     "вул. Квіткова, 7, Київ",
+        "latitude":    50.4625,
+        "longitude":   30.5180,
+        "phone":       "+38 067 777-88-99",
+        "email":       "hello@kvituchysad.ua",
+        "website":     "https://kvituchysad.ua",
+        "region_id":   kyiv_id,
+        "status":      "verified",
+        "tags":        ["троянди", "хвойні", "саджанці плодових", "декоративні кущі", "добрива"],
+        "admin_tags":  ["перевірено", "топ-продавець"],
+        "photos": [
+            "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=70",
+            "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=70",
+            "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=900&q=70",
+            "https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&w=900&q=70",
+        ],
+        "videos": [
+            "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+            "https://www.w3schools.com/html/mov_bbb.mp4",
+        ],
+    },
+    {
         "name":        "Садовий центр «Зелена садиба»",
         "description": "Широкий асортимент розсади овочів, квітів та садових рослин. Консультації агронома.",
         "address":     "вул. Садова, 12, Київ",
