@@ -94,10 +94,16 @@ async def list_saved_articles(current_user: dict = Depends(get_current_user)):
 @router.post("/me/saved-articles/{article_id}", status_code=status.HTTP_201_CREATED)
 async def save_article(article_id: str, current_user: dict = Depends(get_current_user)):
     sb = get_supabase()
-    sb.table("saved_articles").upsert(
-        {"user_id": current_user["id"], "article_id": article_id},
-        on_conflict="user_id,article_id",
-    ).execute()
+    user_id = current_user["id"]
+    existing = (
+        sb.table("saved_articles")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("article_id", article_id)
+        .execute()
+    )
+    if not (existing.data or []):
+        sb.table("saved_articles").insert({"user_id": user_id, "article_id": article_id}).execute()
     return {"article_id": article_id, "saved": True}
 
 

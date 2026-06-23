@@ -93,7 +93,7 @@ export default function KnowledgePage() {
               <path d="M85 38 L97 47 L84 52" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <div className="rounded-3xl overflow-hidden shadow-lg aspect-[16/9] bg-card-green">
+          <div className="rounded-2xl overflow-hidden shadow-lg aspect-[16/9] bg-card-green">
             <img src={HERO_IMG} alt="Сад" className="w-full h-full object-cover" loading="lazy" />
           </div>
         </div>
@@ -103,16 +103,16 @@ export default function KnowledgePage() {
           {categories.map((c, i) => {
             const a = ACCENTS[Math.floor(i / 3) % ACCENTS.length]
             return (
-              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
+              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
                 {/* Header + count badge */}
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="font-black text-gray-800 text-lg leading-tight">{c.emoji} {c.name}</h2>
-                  <div className="shrink-0 rounded-lg px-2.5 py-1 text-center leading-none" style={{ background: a.badgeBg }}>
+                <div className="flex items-start justify-between gap-3 mb-2.5">
+                  <h2 className="font-black text-gray-900 text-2xl leading-tight self-end">{c.emoji} {c.name}</h2>
+                  <div className="shrink-0 rounded-md px-2.5 py-1 text-center leading-none" style={{ background: a.badgeBg }}>
                     <div className="font-black text-lg" style={{ color: a.badgeText }}>{c.article_count}</div>
                     <div className="text-[10px]" style={{ color: a.badgeText }}>статті</div>
                   </div>
                 </div>
-                <div className="h-0.5 rounded-full mt-2 mb-3" style={{ background: a.bar }} />
+                <div className="h-[3px] rounded-full mb-3" style={{ background: a.bar }} />
 
                 {c.description && <p className="text-sm text-gray-500 leading-relaxed mb-3">{c.description}</p>}
 
@@ -169,7 +169,7 @@ export default function KnowledgePage() {
           ) : (
             <div className="space-y-4">
               {articles.map(a => (
-                <Link key={a.id} to={`/knowledge/${a.slug}`} className="flex gap-4 bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                <Link key={a.id} to={`/knowledge/${a.slug}`} className="flex gap-4 bg-white rounded-lg border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
                   {a.cover_image
                     ? <img src={a.cover_image} alt="" className="w-28 h-28 rounded-xl object-cover shrink-0" />
                     : <div className="w-28 h-28 rounded-xl bg-card-green flex items-center justify-center text-3xl shrink-0">📄</div>}
