@@ -137,6 +137,27 @@ export default function MapPage() {
   const [locating,     setLocating]     = useState(false)
   const [activeId,     setActiveId]     = useState<string | null>(null)
   const [tagFilter,    setTagFilter]    = useState('')
+  const [panelWidth,   setPanelWidth]   = useState(384)
+  const resizing = useRef(false)
+
+  // Drag the panel's left edge to resize it.
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      if (!resizing.current) return
+      const w = window.innerWidth - e.clientX
+      setPanelWidth(Math.min(Math.max(w, 340), Math.min(900, window.innerWidth * 0.75)))
+    }
+    const up = () => { resizing.current = false; document.body.style.userSelect = '' }
+    window.addEventListener('mousemove', move)
+    window.addEventListener('mouseup', up)
+    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
+  }, [])
+
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault()
+    resizing.current = true
+    document.body.style.userSelect = 'none'
+  }
 
   useEffect(() => {
     Promise.all([
@@ -361,12 +382,21 @@ export default function MapPage() {
         </MapContainer>
       </div>
 
+      {/* ── Drag handle to resize the detail panel ────────────────────── */}
+      {selected && (
+        <div
+          onMouseDown={startResize}
+          title="Перетягніть, щоб змінити ширину"
+          className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 hover:bg-forest/40 active:bg-forest/60 transition-colors"
+        />
+      )}
+
       {/* ── Right detail panel — slides in on marker/list click ───────── */}
       {selected && (
         <aside
           key={selected.id}
-          className="w-96 shrink-0 bg-white border-l border-gray-200 overflow-y-auto"
-          style={{ animation: 'mapSlideRight 0.4s cubic-bezier(0.16,1,0.3,1) both' }}
+          className="shrink-0 bg-white border-l border-gray-200 overflow-y-auto"
+          style={{ width: panelWidth, animation: 'mapSlideRight 0.4s cubic-bezier(0.16,1,0.3,1) both' }}
         >
           {/* Header */}
           <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-5 pt-4 pb-3 flex items-start gap-3">
