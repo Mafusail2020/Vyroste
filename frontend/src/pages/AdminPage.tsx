@@ -214,6 +214,10 @@ export default function AdminPage() {
           <h1 className="text-2xl font-black text-forest uppercase">Адміністрування</h1>
           <p className="text-sm text-gray-400 mt-0.5">Виросте — панель управління</p>
         </div>
+        <Link to="/admin/knowledge"
+          className="px-4 py-2.5 rounded-xl bg-card-purple text-navy text-sm font-bold uppercase tracking-wide hover:brightness-95 transition">
+          📚 База знань
+        </Link>
       </div>
 
       {/* Tabs */}
