@@ -104,28 +104,31 @@ export default function KnowledgePage() {
             const a = ACCENTS[Math.floor(i / 3) % ACCENTS.length]
             return (
               <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
-                {/* Header + count badge */}
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                  <h2 className="font-black text-gray-900 text-2xl leading-tight self-end">{c.emoji} {c.name}</h2>
-                  <div className="shrink-0 rounded-md px-2.5 py-1 text-center leading-none" style={{ background: a.badgeBg }}>
-                    <div className="font-black text-lg" style={{ color: a.badgeText }}>{c.article_count}</div>
-                    <div className="text-[10px]" style={{ color: a.badgeText }}>статті</div>
+                {/* Header: title + trailing rule; count badge top-right */}
+                <div className="relative mb-3 pt-0.5">
+                  <div className="absolute top-0 right-0 rounded-md px-2.5 py-1 text-center leading-none" style={{ background: a.badgeBg }}>
+                    <div className="font-black text-lg text-gray-700">{c.article_count}</div>
+                    <div className="text-[10px] text-gray-500">статті</div>
+                  </div>
+                  <div className="flex items-end gap-3 pr-16">
+                    <h2 className="font-black text-3xl text-slate-500 leading-tight">{c.name}</h2>
+                    <div className="flex-1 min-w-[24px] h-[3px] rounded-full mb-2" style={{ background: a.bar }} />
                   </div>
                 </div>
-                <div className="h-[3px] rounded-full mb-3" style={{ background: a.bar }} />
 
                 {c.description && <p className="text-sm text-gray-500 leading-relaxed mb-3">{c.description}</p>}
 
-                {/* Subcategories */}
+                {/* Subcategories — full-bleed light-green hover */}
                 {(c.subcategories?.length ?? 0) > 0 && (
-                  <ul className="space-y-0.5 mb-4 flex-1">
+                  <ul className="mb-4 flex-1">
                     {c.subcategories!.map(s => (
                       <li key={s}>
                         <Link
                           to={`/knowledge?category=${c.slug}`}
-                          className="flex items-center gap-1.5 text-sm text-gray-600 px-2 py-1 -mx-2 rounded hover:bg-forest/5 hover:text-forest transition-colors"
+                          className="group flex items-center gap-2 text-[15px] text-gray-600 -mx-5 px-5 py-1.5 hover:bg-[#E6F0D5] transition-colors duration-200"
                         >
-                          <span className="text-forest text-xs">▸</span> {s}
+                          <span className="text-[#4B9F2F] text-sm leading-none transition-transform duration-200 group-hover:translate-x-0.5">▸</span>
+                          {s}
                         </Link>
                       </li>
                     ))}
@@ -133,7 +136,7 @@ export default function KnowledgePage() {
                 )}
 
                 <Link to={`/knowledge?category=${c.slug}`} className="mt-auto text-sm font-bold text-forest hover:underline">
-                  Подивитись всі статті ›
+                  Подивитись всі статті ▸
                 </Link>
               </div>
             )
