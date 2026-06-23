@@ -8,7 +8,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-lea
 import * as L from 'leaflet'
 import {
   ArrowLeft, Sprout, MapPin, Tags, Phone, Images,
-  UploadCloud, X, Loader2, Check, Search,
+  UploadCloud, X, Loader2, Check,
 } from 'lucide-react'
 import api from '../lib/api'
 
@@ -116,7 +116,6 @@ export default function NurseryRegisterPage() {
   // Geocoding (client-side Nominatim, like the original «Знайти» flow).
   const [lat, setLat] = useState<number | null>(null)
   const [lon, setLon] = useState<number | null>(null)
-  const [geoLoading, setGeoLoading] = useState(false)
   const [geoMsg, setGeoMsg] = useState('')
 
   const {
@@ -134,7 +133,7 @@ export default function NurseryRegisterPage() {
   async function geocode() {
     const address = (getValues('address') || '').trim()
     if (address.length < 3) { setGeoMsg('Введіть адресу спочатку'); return }
-    setGeoLoading(true); setGeoMsg('')
+    setGeoMsg('')
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Україна')}&format=json&limit=1&countrycodes=ua&accept-language=uk`
       const data: GeoResult[] = await (await fetch(url)).json()
@@ -146,8 +145,6 @@ export default function NurseryRegisterPage() {
       }
     } catch {
       setGeoMsg('Помилка пошуку. Перевірте з\'єднання.')
-    } finally {
-      setGeoLoading(false)
     }
   }
 
@@ -290,19 +287,12 @@ export default function NurseryRegisterPage() {
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             Адреса <span className="text-red-400">*</span>
           </label>
-          <div className="flex gap-2">
-            <input
-              {...register('address')}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); geocode() } }}
-              placeholder="вул. Садова, 12, Київ"
-              className={inputBase}
-            />
-            <button type="button" onClick={geocode} disabled={geoLoading}
-              className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-forest text-white text-sm font-semibold hover:bg-forest-dark transition-colors disabled:opacity-50">
-              {geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              Знайти
-            </button>
-          </div>
+          <input
+            {...register('address')}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); geocode() } }}
+            placeholder="вул. Садова, 12, Київ"
+            className={inputBase}
+          />
           <FieldError msg={errors.address?.message} />
           {geoMsg && (
             <p className={`mt-2 text-xs ${geoMsg.startsWith('✓') ? 'text-forest' : 'text-amber-600'}`}>{geoMsg}</p>
