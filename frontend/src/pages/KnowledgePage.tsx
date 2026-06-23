@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import api from '../lib/api'
 import KbSidebar, { type KbCategory as SidebarCategory } from '../components/KbSidebar'
 
@@ -79,13 +80,16 @@ export default function KnowledgePage() {
             <p className="text-gray-500 text-sm leading-relaxed mb-6 max-w-xs">
               Усе про сад і город — гіди з вирощування, поради агрономів та відповіді на питання.
             </p>
-            <form onSubmit={submitSearch} className="flex max-w-xs">
+            <form onSubmit={submitSearch} className="flex items-stretch max-w-sm border border-gray-300 rounded-md bg-[#F6F6F3] p-0.5">
               <input
                 type="text" value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Пошук статей…"
-                className="flex-1 min-w-0 px-3 py-2.5 border-2 border-gray-200 rounded-l-lg text-sm focus:outline-none focus:border-forest bg-white"
+                className="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm focus:outline-none"
               />
-              <button type="submit" className="px-4 bg-forest text-white rounded-r-lg hover:bg-forest-dark transition-colors">🔍</button>
+              <button type="submit"
+                className="px-3 flex items-center justify-center rounded bg-[#6E8B6E] hover:bg-[#5d795d] transition-colors">
+                <Search className="w-4 h-4 text-white" />
+              </button>
             </form>
             {/* hand-drawn arrow */}
             <svg className="hidden lg:block absolute -bottom-16 left-24 text-gray-300" width="120" height="60" viewBox="0 0 120 60" fill="none">
@@ -104,16 +108,17 @@ export default function KnowledgePage() {
             const a = ACCENTS[Math.floor(i / 3) % ACCENTS.length]
             return (
               <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
-                {/* Header: title + trailing rule; count badge top-right */}
-                <div className="relative mb-3 pt-0.5">
-                  <div className="absolute top-0 right-0 rounded-md px-2.5 py-1 text-center leading-none" style={{ background: a.badgeBg }}>
-                    <div className="font-black text-lg text-gray-700">{c.article_count}</div>
-                    <div className="text-[10px] text-gray-500">статті</div>
+                {/* Header: title + counter on a row, split rule fully below */}
+                <div className="mb-3">
+                  <div className="flex items-start justify-between gap-3 mb-2.5">
+                    <h2 className="font-black text-2xl text-slate-500 leading-tight">{c.name}</h2>
+                    <div className="shrink-0 rounded-sm px-2.5 py-1 text-center leading-none" style={{ background: a.badgeBg }}>
+                      <div className="font-black text-lg text-gray-700">{c.article_count}</div>
+                      <div className="text-[10px] text-gray-500">статті</div>
+                    </div>
                   </div>
-                  <div className="flex items-end gap-3 pr-16">
-                    <h2 className="font-black text-3xl text-slate-500 leading-tight">{c.name}</h2>
-                    <div className="flex-1 min-w-[24px] h-[3px] rounded-full mb-2" style={{ background: a.bar }} />
-                  </div>
+                  {/* full-width rule: first 1/3 accent, rest grey */}
+                  <div className="h-[3px] rounded-full" style={{ background: `linear-gradient(to right, ${a.bar} 0 33%, #E5E7EB 33% 100%)` }} />
                 </div>
 
                 {c.description && <p className="text-sm text-gray-500 leading-relaxed mb-3">{c.description}</p>}
