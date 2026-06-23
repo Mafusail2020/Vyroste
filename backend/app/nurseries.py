@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import uuid
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel
 from app.auth import get_current_user
 from app.deps import get_supabase
 
 router = APIRouter(prefix="/nurseries")
+
+PHOTO_BUCKET = "nursery-photos"
+MAX_PHOTO_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
 def _require_admin(sb, user_id: str) -> None:
@@ -91,6 +96,30 @@ class NurseryUpdate(BaseModel):
 
 class AdminTags(BaseModel):
     admin_tags: list[str] = []
+
+
+@router.post("/upload")
+async def upload_photo(
+    file: UploadFile = File(...),
+    _: dict = Depends(get_current_user),
+):
+    """Any authenticated user uploads a nursery photo → Supabase Storage."""
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Only image uploads are allowed")
+    blob = await file.read()
+    if len(blob) > MAX_PHOTO_BYTES:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Image too large (max 2 MB)")
+
+    ext = (file.filename or "img").rsplit(".", 1)[-1].lower()
+    path = f"{uuid.uuid4().hex}.{ext}"
+    sb = get_supabase()
+    try:
+        sb.storage.from_(PHOTO_BUCKET).upload(
+            path, blob, {"content-type": file.content_type, "upsert": "false"}
+        )
+    except Exception as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Upload failed: {e}")
+    return {"url": sb.storage.from_(PHOTO_BUCKET).get_public_url(path)}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
