@@ -144,3 +144,6 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
   - Bookmarks: `BookmarkButton.tsx` → `saved-articles`; cabinet Saved tab resolves real
     titles/links (users.py merges kb_articles meta — no FK, Python join).
   - `.prose-article` CSS in `src/index.css` styles both the editor and the reading view.
+  - Migration `012_kb_category_meta.sql`: kb_categories `description` + `subcategories[]`.
+    `/knowledge` landing is a category grid (count badge + description + subtopic links per
+    card); selecting a category/search switches to the article-list + sidebar view.

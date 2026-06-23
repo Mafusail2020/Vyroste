@@ -2,7 +2,8 @@
 Seed Knowledge Base categories + sample articles.
 Run from backend/: python scripts/seed_knowledge.py
 
-Requires migration 011_knowledge_base.sql applied. Idempotent (skips if articles exist).
+Requires migrations 011 + 012 applied. Categories are upserted every run (by
+slug); sample articles are inserted only when none exist yet.
 """
 import sys
 import os
@@ -29,16 +30,39 @@ def doc(*nodes: dict) -> dict:
 
 
 CATEGORIES = [
-    {"name": "Вирощування",        "emoji": "🌱", "sort_order": 1},
-    {"name": "Хвороби та шкідники", "emoji": "🐛", "sort_order": 2},
-    {"name": "Місячний календар",   "emoji": "🌙", "sort_order": 3},
-    {"name": "Поради",             "emoji": "💡", "sort_order": 4},
+    {"name": "Сад", "emoji": "🌳", "sort_order": 1,
+     "description": "Усе про вирощування плодових дерев: прививки, обрізка, обробки.",
+     "subcategories": ["Косточкові", "Семечкові", "Ягідні кущі", "Виноград", "Екзотика", "Добрива", "Хвороби та шкідники"]},
+    {"name": "Город", "emoji": "🥕", "sort_order": 2,
+     "description": "Овочеві культури: посів, догляд, збір та зберігання врожаю.",
+     "subcategories": ["Пасльонові", "Капустяні", "Коренеплоди", "Зелень", "Бобові", "Гарбузові", "Добрива"]},
+    {"name": "Теплиця", "emoji": "🏠", "sort_order": 3,
+     "description": "Захищений ґрунт: облаштування, мікроклімат, ранній урожай.",
+     "subcategories": ["Облаштування", "Опалення", "Полив", "Томати", "Огірки", "Розсада"]},
+    {"name": "Хвороби, шкідники, добрива, препарати", "emoji": "🐛", "sort_order": 4,
+     "description": "Діагностика, профілактика та лікування рослин органічними методами.",
+     "subcategories": ["Грибкові", "Бактеріальні", "Комахи", "Профілактика", "Біопрепарати"]},
+    {"name": "Органічне землеробство", "emoji": "♻️", "sort_order": 5,
+     "description": "Природне землеробство: компост, сидерати, мульча, сівозміна.",
+     "subcategories": ["Компост", "Сидерати", "Мульча", "Біопрепарати", "Сівозміна"]},
+    {"name": "Загальні питання", "emoji": "💡", "sort_order": 6,
+     "description": "Базові знання для початківців: ґрунт, інструменти, планування.",
+     "subcategories": ["Початківцям", "Інструменти", "Ґрунт", "Місячний календар", "Погода"]},
+    {"name": "Декоративні дерева та кущі", "emoji": "🌲", "sort_order": 7,
+     "description": "Озеленення ділянки: хвойні, живоплоти, формування крони.",
+     "subcategories": ["Хвойні", "Живоплоти", "Формування", "Топіарі", "Догляд"]},
+    {"name": "Квіти", "emoji": "🌸", "sort_order": 8,
+     "description": "Однорічні та багаторічні квіти: посадка, догляд, композиції.",
+     "subcategories": ["Однорічні", "Багаторічні", "Цибулинні", "Троянди", "Догляд"]},
+    {"name": "Ландшафтний дизайн", "emoji": "🏞️", "sort_order": 9,
+     "description": "Планування простору: газон, доріжки, водойми, освітлення.",
+     "subcategories": ["Планування", "Газон", "Доріжки", "Водойми", "Освітлення"]},
 ]
 
 # (category name, title, excerpt, tags, content doc)
 ARTICLES = [
     (
-        "Вирощування",
+        "Город",
         "Як виростити міцну розсаду томатів удома",
         "Покроковий гід: від вибору насіння до загартовування перед висадкою у відкритий ґрунт.",
         ["томати", "розсада"],
@@ -55,7 +79,7 @@ ARTICLES = [
         ),
     ),
     (
-        "Хвороби та шкідники",
+        "Хвороби, шкідники, добрива, препарати",
         "Фітофтороз: як розпізнати і зупинити вчасно",
         "Найнебезпечніша хвороба пасльонових. Ознаки, профілактика та органічні методи боротьби.",
         ["хвороби", "томати", "профілактика"],
@@ -70,7 +94,7 @@ ARTICLES = [
         ),
     ),
     (
-        "Місячний календар",
+        "Загальні питання",
         "Чому садівники орієнтуються на фази Місяця",
         "Розбираємо, що таке наземні та підземні дні та як це впливає на посів і збір урожаю.",
         ["місяць", "календар"],
@@ -85,7 +109,7 @@ ARTICLES = [
         ),
     ),
     (
-        "Поради",
+        "Органічне землеробство",
         "Мульчування: простий прийом, що економить воду й час",
         "Який матеріал обрати, якої товщини шар та яких помилок уникати.",
         ["мульча", "догляд", "ґрунт"],
@@ -103,18 +127,17 @@ ARTICLES = [
 
 
 def main() -> None:
-    existing = sb.table("kb_articles").select("id", count="exact").execute()
-    if existing.count and existing.count > 0:
-        print(f"kb_articles already has {existing.count} rows — skipping.")
-        return
-
-    # Categories (upsert by slug).
+    # Categories — upsert every run so the landing always has the full set.
     cat_id: dict[str, str] = {}
     for c in CATEGORIES:
-        slug = _slugify(c["name"])
-        row = sb.table("kb_categories").upsert({**c, "slug": slug}, on_conflict="slug").execute()
+        row = sb.table("kb_categories").upsert({**c, "slug": _slugify(c["name"])}, on_conflict="slug").execute()
         cat_id[c["name"]] = row.data[0]["id"]
-    print(f"Seeded {len(CATEGORIES)} categories.")
+    print(f"Upserted {len(CATEGORIES)} categories.")
+
+    existing = sb.table("kb_articles").select("id", count="exact").execute()
+    if existing.count and existing.count > 0:
+        print(f"kb_articles already has {existing.count} rows — skipping articles.")
+        return
 
     payload = []
     for cat, title, excerpt, tags, content in ARTICLES:

@@ -45,7 +45,7 @@ export default function AdminKnowledgePage() {
   const [form, setForm]       = useState<FormState | null>(null)   // null = list view
   const [saving, setSaving]   = useState(false)
   const [tagInput, setTagInput] = useState('')
-  const [newCat, setNewCat]   = useState({ name: '', emoji: '' })
+  const [newCat, setNewCat]   = useState({ name: '', emoji: '', description: '', subcategories: '' })
 
   useEffect(() => {
     api.get<Profile>('/api/users/me')
@@ -110,8 +110,13 @@ export default function AdminKnowledgePage() {
   async function addCategory() {
     if (!newCat.name.trim()) return
     try {
-      await api.post('/api/knowledge/categories', { name: newCat.name.trim(), emoji: newCat.emoji.trim() || null })
-      setNewCat({ name: '', emoji: '' })
+      await api.post('/api/knowledge/categories', {
+        name: newCat.name.trim(),
+        emoji: newCat.emoji.trim() || null,
+        description: newCat.description.trim() || null,
+        subcategories: newCat.subcategories.split(',').map(s => s.trim()).filter(Boolean),
+      })
+      setNewCat({ name: '', emoji: '', description: '', subcategories: '' })
       api.get<Category[]>('/api/knowledge/categories').then(r => setCategories(r.data))
     } catch { toast.error('Помилка') }
   }
@@ -241,13 +246,18 @@ export default function AdminKnowledgePage() {
           ))}
           {categories.length === 0 && <span className="text-sm text-gray-400">Ще немає категорій</span>}
         </div>
-        <div className="flex gap-2">
-          <input value={newCat.emoji} onChange={e => setNewCat(c => ({ ...c, emoji: e.target.value }))} placeholder="🌱"
-            className="w-14 text-center px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-forest" />
-          <input value={newCat.name} onChange={e => setNewCat(c => ({ ...c, name: e.target.value }))} placeholder="Назва категорії"
-            onKeyDown={e => e.key === 'Enter' && addCategory()}
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-forest" />
-          <button onClick={addCategory} className="px-4 py-2 rounded-lg bg-forest/10 text-forest text-sm font-semibold hover:bg-forest/20">Додати</button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input value={newCat.emoji} onChange={e => setNewCat(c => ({ ...c, emoji: e.target.value }))} placeholder="🌱"
+              className="w-14 text-center px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-forest" />
+            <input value={newCat.name} onChange={e => setNewCat(c => ({ ...c, name: e.target.value }))} placeholder="Назва категорії"
+              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-forest" />
+            <button onClick={addCategory} className="px-4 py-2 rounded-lg bg-forest/10 text-forest text-sm font-semibold hover:bg-forest/20">Додати</button>
+          </div>
+          <input value={newCat.description} onChange={e => setNewCat(c => ({ ...c, description: e.target.value }))} placeholder="Короткий опис категорії"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-forest" />
+          <input value={newCat.subcategories} onChange={e => setNewCat(c => ({ ...c, subcategories: e.target.value }))} placeholder="Підтеми через кому: Косточкові, Семечкові, Виноград"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-forest" />
         </div>
       </div>
 

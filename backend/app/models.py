@@ -50,6 +50,8 @@ class KbCategory(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     emoji: Mapped[str | None] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
+    subcategories: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default=text("'{}'"))
     sort_order: Mapped[int] = mapped_column(Integer, server_default=text("0"))
 
     articles: Mapped[list[KbArticle]] = relationship(back_populates="category")

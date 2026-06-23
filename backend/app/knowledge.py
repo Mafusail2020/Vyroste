@@ -57,6 +57,8 @@ class CategoryIn(BaseModel):
     name: str
     slug: str | None = None
     emoji: str | None = None
+    description: str | None = None
+    subcategories: list[str] = []
     sort_order: int = 0
 
 
@@ -87,8 +89,18 @@ class ArticleUpdate(BaseModel):
 # ── Public: categories ──────────────────────────────────────────────────────
 @router.get("/categories")
 def list_categories():
+    """Categories + published-article counts (for the /knowledge landing cards)."""
     sb = get_supabase()
-    return sb.table("kb_categories").select("*").order("sort_order").execute().data or []
+    cats = sb.table("kb_categories").select("*").order("sort_order").execute().data or []
+    arts = sb.table("kb_articles").select("category_id").eq("published", True).execute().data or []
+    counts: dict[str, int] = {}
+    for a in arts:
+        cid = a.get("category_id")
+        if cid:
+            counts[cid] = counts.get(cid, 0) + 1
+    for c in cats:
+        c["article_count"] = counts.get(c["id"], 0)
+    return cats
 
 
 # ── Public: articles ────────────────────────────────────────────────────────
