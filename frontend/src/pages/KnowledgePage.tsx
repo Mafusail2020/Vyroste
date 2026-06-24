@@ -157,45 +157,70 @@ export default function KnowledgePage() {
     </div>
   )
 
-  /* ── Filtered: article list + sidebar ─────────────────────────────────── */
+  /* ── Filtered: editorial article feed + sidebar ───────────────────────── */
   const activeCat = categories.find(c => c.slug === category)
-  const heading = q ? `Пошук: «${q}»` : activeCat ? `${activeCat.emoji ?? ''} ${activeCat.name}` : 'База знань'
-  const sidebarCats: SidebarCategory[] = categories.map(c => ({ id: c.id, name: c.name, slug: c.slug, emoji: c.emoji }))
+  const heading = q ? `Пошук: «${q}»` : activeCat?.name || 'База знань'
+  const sidebarCats: SidebarCategory[] = categories.map(c => ({
+    id: c.id, name: c.name, slug: c.slug, emoji: c.emoji, subcategories: c.subcategories,
+  }))
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-10">
-        <div>
-          <Link to="/knowledge" className="text-sm text-gray-400 hover:text-forest">← Усі категорії</Link>
-          <h1 className="text-2xl font-black text-forest uppercase mt-2 mb-1">{heading}</h1>
-          <p className="text-gray-400 text-sm mb-8">{loading ? 'Завантаження…' : `${articles.length} статей`}</p>
+    <div className="bg-cream min-h-screen">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="flex flex-col lg:flex-row gap-12">
 
-          {loading ? (
-            <div className="space-y-4">{[0, 1, 2].map(i => <div key={i} className="h-28 bg-white rounded-2xl border border-gray-100 animate-pulse" />)}</div>
-          ) : articles.length === 0 ? (
-            <div className="text-center py-20 text-gray-400"><div className="text-4xl mb-3">📭</div><p>Статей не знайдено</p></div>
-          ) : (
-            <div className="space-y-4">
-              {articles.map(a => (
-                <Link key={a.id} to={`/knowledge/${a.slug}`} className="flex gap-4 bg-white rounded-lg border border-gray-100 p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
-                  {a.cover_image
-                    ? <img src={a.cover_image} alt="" className="w-28 h-28 rounded-xl object-cover shrink-0" />
-                    : <div className="w-28 h-28 rounded-xl bg-card-green flex items-center justify-center text-3xl shrink-0">📄</div>}
-                  <div className="min-w-0 flex flex-col">
-                    <h2 className="font-black text-gray-800 text-lg leading-tight mb-1">{a.title}</h2>
-                    {a.excerpt && <p className="text-sm text-gray-500 line-clamp-2 flex-1">{a.excerpt}</p>}
-                    <div className="flex items-center gap-3 text-xs text-gray-400 mt-2">
-                      <span>⏱ {a.reading_minutes} хв</span>
-                      <span>👁 {a.views}</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+          {/* ── Main feed ── */}
+          <div className="w-full lg:w-8/12">
+            {/* Header */}
+            <h1 className="text-4xl font-black text-navy uppercase tracking-tight leading-none">{heading}</h1>
+            {activeCat?.description && (
+              <p className="text-sm text-gray-400 mt-4 max-w-md leading-relaxed whitespace-pre-line">{activeCat.description}</p>
+            )}
+            <div className="flex items-center gap-3 mt-6 mb-12">
+              <div className="bg-card-green px-4 py-1.5 rounded-sm">
+                <span className="text-5xl font-black text-slate-700 leading-none tabular-nums">{loading ? '—' : articles.length}</span>
+              </div>
+              <span className="text-2xl text-gray-400">статті</span>
             </div>
-          )}
-        </div>
 
-        <aside><KbSidebar categories={sidebarCats} activeSlug={category || undefined} initialQuery={q} /></aside>
+            {/* Feed */}
+            {loading ? (
+              <div className="space-y-10">{[0, 1, 2].map(i => (
+                <div key={i} className="flex gap-6">
+                  <div className="w-5/12 aspect-[4/3] bg-gray-200 animate-pulse" />
+                  <div className="w-7/12 space-y-3"><div className="h-7 bg-gray-200 rounded animate-pulse" /><div className="h-4 bg-gray-200 rounded animate-pulse w-5/6" /></div>
+                </div>
+              ))}</div>
+            ) : articles.length === 0 ? (
+              <div className="py-20 text-gray-400"><div className="text-4xl mb-3">📭</div><p>Статей не знайдено</p></div>
+            ) : (
+              <div className="space-y-12">
+                {articles.map(a => (
+                  <Link key={a.id} to={`/knowledge/${a.slug}`} className="flex flex-col sm:flex-row gap-6 group">
+                    <div className="sm:w-5/12 shrink-0">
+                      {a.cover_image
+                        ? <img src={a.cover_image} alt="" className="w-full aspect-[4/3] object-cover border-b-4 border-gray-500" loading="lazy" />
+                        : <div className="w-full aspect-[4/3] bg-card-green flex items-center justify-center text-4xl border-b-4 border-gray-500">📄</div>}
+                    </div>
+                    <div className="sm:w-7/12">
+                      <h2 className="text-2xl font-black text-slate-600 leading-snug group-hover:text-forest transition-colors">{a.title}</h2>
+                      {a.excerpt && <p className="text-sm text-gray-500 leading-relaxed mt-4">{a.excerpt}</p>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Sidebar ── */}
+          <aside className="w-full lg:w-4/12">
+            <KbSidebar
+              categories={sidebarCats}
+              activeSlug={category || undefined}
+              initialQuery={q}
+            />
+          </aside>
+        </div>
       </div>
     </div>
   )
