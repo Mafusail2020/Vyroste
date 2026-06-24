@@ -108,10 +108,11 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
 - [x] Slice 14 — Multiple Calendars + Types
   - Migrations: `006_calendars.sql` (calendars table, owner RLS), `007_drop_legacy_crops.sql`
     (drops `crops` + `user_profiles.selected_crops`; drops stale `gdd_alerts_sent` FK),
-    `008_calendar_type.sql` (`calendar_type` horod/sad/mixed).
+    `008_calendar_type.sql` (`calendar_type` horod/sad/mixed),
+    `013_calendar_type_kviti.sql` (adds `kviti`; flowers split out of `sad`).
   - Each calendar owns its own `region_id` + `selected_varieties` + `calendar_type`.
-    Type gates which crop kinds can be added: horod→vegetable/herb, sad→flower/berry/tree,
-    mixed→all (enforced in `app/calendars.py` add-variety + frontend picker filter).
+    Type gates which crop kinds can be added: horod→vegetable/herb, sad→berry/tree,
+    kviti→flower, mixed→all (enforced in `app/calendars.py` add-variety + frontend picker filter).
   - Endpoints: `GET/POST/PATCH/DELETE /api/calendars`, `.../varieties/{id}`,
     `GET .../windows` (flat CropWindow[]). `/api/gdd/me?calendar_id=` keyed by variety id.
   - UI: right-side calendar panel in `CalendarPage.tsx` (switch/create/inline-rename/region+type

@@ -22,13 +22,14 @@ interface CalendarMeta {
   name: string
   region_id: string | null
   region_name: string | null
-  calendar_type: 'horod' | 'sad' | 'mixed'
+  calendar_type: 'horod' | 'sad' | 'kviti' | 'mixed'
   variety_count: number
 }
 
 const CAL_TYPE_LABELS: Record<string, string> = {
   horod: '🥕 Город',
-  sad:   '🌸 Сад',
+  sad:   '🌳 Сад',
+  kviti: '🌸 Квіти',
   mixed: '🌿 Змішаний',
 }
 
@@ -873,7 +874,8 @@ export default function CalendarPage() {
                           className="flex-1 min-w-0 text-xs px-2 py-1 border border-forest rounded-lg bg-white focus:outline-none"
                         >
                           <option value="horod">🥕 Город</option>
-                          <option value="sad">🌸 Сад</option>
+                          <option value="sad">🌳 Сад</option>
+                          <option value="kviti">🌸 Квіти</option>
                           <option value="mixed">🌿 Змішаний</option>
                         </select>
                       ) : (
@@ -922,7 +924,8 @@ export default function CalendarPage() {
                 >
                   <option value="mixed">🌿 Змішаний</option>
                   <option value="horod">🥕 Город</option>
-                  <option value="sad">🌸 Сад</option>
+                  <option value="sad">🌳 Сад</option>
+                  <option value="kviti">🌸 Квіти</option>
                 </select>
                 <div className="flex gap-2">
                   <button onClick={createCalendar} className="flex-1 text-xs font-bold py-2 rounded-lg bg-forest text-white hover:bg-forest-dark">Створити</button>

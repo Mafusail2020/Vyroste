@@ -25,14 +25,15 @@ interface Category {
 interface CalendarMeta {
   id: string
   name: string
-  calendar_type: 'horod' | 'sad' | 'mixed'
+  calendar_type: 'horod' | 'sad' | 'kviti' | 'mixed'
   selected_varieties: string[] | null
 }
 
 // Calendar type → allowed crop-category types (mixed = all).
 const TYPE_ALLOWED: Record<string, string[]> = {
   horod: ['vegetable', 'herb'],
-  sad:   ['flower', 'berry', 'tree'],
+  sad:   ['berry', 'tree'],
+  kviti: ['flower'],
 }
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */

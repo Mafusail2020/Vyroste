@@ -19,7 +19,8 @@ router = APIRouter(prefix="/calendars")
 # Calendar type → allowed crop-category types. 'mixed' allows everything.
 TYPE_ALLOWED: dict[str, set[str]] = {
     "horod": {"vegetable", "herb"},
-    "sad":   {"flower", "berry", "tree"},
+    "sad":   {"berry", "tree"},
+    "kviti": {"flower"},
 }
 
 
@@ -91,7 +92,7 @@ async def create_calendar(body: CalendarCreate, current_user: dict = Depends(get
         "user_id": current_user["id"],
         "name": body.name.strip() or "Мій календар",
         "region_id": body.region_id,
-        "calendar_type": body.calendar_type if body.calendar_type in {"horod", "sad", "mixed"} else "mixed",
+        "calendar_type": body.calendar_type if body.calendar_type in {"horod", "sad", "kviti", "mixed"} else "mixed",
         "selected_varieties": body.selected_varieties,
     }).execute()
     return _with_meta(sb, res.data[0])
