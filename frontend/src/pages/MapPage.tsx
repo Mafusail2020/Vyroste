@@ -363,8 +363,8 @@ export default function MapPage() {
                   <div className="h-[3px] rounded-full bg-forest/40 my-2.5" />
 
                   {/* Phone (above) + address, with the details button */}
-                  <div className="flex items-stretch justify-between gap-2">
-                    <div className="min-w-0 flex flex-col justify-center">
+                  <div className="flex items-end justify-between gap-2">
+                    <div className="min-w-0">
                       {n.phone && (
                         <button onClick={e => { e.stopPropagation(); copyPhone(n.phone!) }}
                           className="text-base font-black text-gray-800 leading-tight truncate text-left hover:text-forest transition-colors"
@@ -375,9 +375,9 @@ export default function MapPage() {
                       {n.address && <p className="text-xs text-gray-500 mt-0.5 truncate">{n.address}</p>}
                     </div>
                     <button onClick={e => { e.stopPropagation(); select() }}
-                      className="shrink-0 self-stretch group flex items-center justify-center gap-1.5 bg-forest text-white font-bold text-xs px-4 rounded-sm hover:bg-forest-dark transition-colors">
+                      className="shrink-0 group flex items-center gap-1 bg-[#7E8C6E] text-white font-semibold text-xs px-3 py-1.5 rounded-sm hover:bg-[#6f7d60] transition-colors">
                       докладніше
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>
