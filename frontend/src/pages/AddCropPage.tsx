@@ -45,14 +45,8 @@ const CROP_TYPE_LABELS: Record<string, string> = {
   vegetable: 'Овочі', herb: 'Зелень', flower: 'Квіти', berry: 'Ягоди', tree: 'Дерева',
 }
 
-const TASK_COLORS: Record<string, string> = {
-  seeding:       '#FDE68A',
-  bed_prep:      '#D6D3D1',
-  transplanting: '#2B6117',
-  direct_sow:    '#22C55E',
-  cultivating:   '#86EFAC',
-  harvesting:    '#FB923C',
-}
+// Quick-pick palette for the plant colour.
+const COLOR_PRESETS = ['#2B6117', '#0D9488', '#2563EB', '#7C3AED', '#EC4899', '#DC2626', '#D97706', '#78350F']
 
 /* ─── Schedule builder (frost-relative offsets in days) ──────────────────── */
 
@@ -172,6 +166,12 @@ export default function AddCropPage() {
     setError('')
     try {
       await api.post(`/api/calendars/${calendar.id}/varieties/${variety.id}`)
+      // Persist the plant's colour (global per variety) for the calendar to read.
+      try {
+        const m = JSON.parse(localStorage.getItem('cropColors') || '{}')
+        m[variety.id] = color
+        localStorage.setItem('cropColors', JSON.stringify(m))
+      } catch { /* ignore quota / parse */ }
       setSuccess(true)
     } catch {
       setError('Помилка збереження. Спробуйте ще раз.')
@@ -344,14 +344,29 @@ export default function AddCropPage() {
 
           {/* ── Color ──────────────────────────────────────────────────── */}
           <div className="flex items-center gap-4 py-4 border-b border-gray-100">
-            <label className="w-44 text-sm font-semibold text-gray-700 shrink-0">Колір</label>
-            <div className="flex items-center gap-3 flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
-              <input
-                type="color" value={color} onChange={e => setColor(e.target.value)}
-                className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent p-0"
-                style={{ appearance: 'none' }}
-              />
-              <span className="text-sm text-gray-600 font-mono">{color.toUpperCase()}</span>
+            <label className="w-44 text-sm font-semibold text-gray-700 shrink-0 pt-2">Колір</label>
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-3 px-4 py-2 border-2 border-gray-200 rounded-xl hover:border-gray-300 transition-colors">
+                <input
+                  type="color" value={color} onChange={e => setColor(e.target.value)}
+                  className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent p-0"
+                  style={{ appearance: 'none' }}
+                />
+                <span className="text-sm text-gray-600 font-mono">{color.toUpperCase()}</span>
+              </div>
+              {/* Quick-pick swatches */}
+              <div className="flex flex-wrap gap-2">
+                {COLOR_PRESETS.map(c => (
+                  <button
+                    key={c} type="button" onClick={() => setColor(c)}
+                    aria-label={c}
+                    className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
+                      color.toLowerCase() === c.toLowerCase() ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -365,7 +380,7 @@ export default function AddCropPage() {
                 {schedule.map((task, idx) => (
                   <div key={idx} className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-base mt-0.5"
-                      style={{ backgroundColor: TASK_COLORS[task.type] + '40' }}>
+                      style={{ backgroundColor: color + '26' }}>
                       {task.icon}
                     </div>
                     <div className="flex-1 min-w-0">

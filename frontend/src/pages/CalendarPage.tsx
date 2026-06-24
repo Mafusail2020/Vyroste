@@ -87,8 +87,17 @@ const TASK_CFG: Record<TaskType, { label: string; icon: string; bg: string; fg: 
   harvesting:    { label: 'Збір врожаю',        icon: '🌾', bg: '#FB923C', fg: '#FFFFFF' },
 }
 
+// Fallback palette by crop type, used only when a plant has no user-picked colour.
 const CROP_COLORS: Record<string, string> = {
   vegetable: '#2B6117', herb: '#0D9488', flower: '#EC4899', berry: '#DC2626', tree: '#78350F',
+}
+
+// Pick readable text (near-black / white) for a given background colour.
+function readableText(hex: string): string {
+  const h = hex.replace('#', '')
+  if (h.length < 6) return '#FFFFFF'
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? '#1C1917' : '#FFFFFF'
 }
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -205,6 +214,10 @@ export default function CalendarPage() {
   const [hoveredCrop,  setHoveredCrop]  = useState<string | null>(null)
   const [showDragHint, setShowDragHint] = useState(() => !localStorage.getItem('calDragHintSeen'))
   const [monthInView,  setMonthInView]  = useState(true)
+  // Per-plant colours picked on the add-crop screen (id → hex), read-only here.
+  const [cropColorMap] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('cropColors') || '{}') } catch { return {} }
+  })
 
   const dragRef     = useRef<{ id: string; startX: number; base: number } | null>(null)
   const liveRef     = useRef<{ id: string; delta: number } | null>(null)
@@ -383,6 +396,10 @@ export default function CalendarPage() {
   const lunarMap: Record<string, string | null> = Object.fromEntries(
     windows.map(w => [w.crop_id, w.lunar_preference])
   )
+  // Resolved bar colour per plant: user-picked, else type fallback.
+  const cropColors: Record<string, string> = Object.fromEntries(
+    windows.map(w => [w.crop_id, cropColorMap[w.crop_id] ?? CROP_COLORS[w.crop_type] ?? '#2B6117'])
+  )
 
   /* ── Early returns ────────────────────────────────────────────────────── */
   if (loading) return (
@@ -458,7 +475,7 @@ export default function CalendarPage() {
                     onMouseLeave={() => setHoveredCrop(null)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-xs transition-colors ${active ? 'bg-forest/10 text-forest' : 'hover:bg-gray-50 text-gray-700'}`}
                   >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CROP_COLORS[w.crop_type] ?? '#2B6117' }} />
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: cropColors[w.crop_id] }} />
                     <span className="truncate font-medium">{w.crop_name}</span>
                     {w.lunar_preference === 'above_ground' && <span className="ml-auto text-gray-400" title="Сприятливі наземні (надземні) дні">🌒</span>}
                     {w.lunar_preference === 'below_ground' && <span className="ml-auto text-gray-400" title="Сприятливі підземні (кореневі) дні">🌘</span>}
@@ -495,7 +512,6 @@ export default function CalendarPage() {
                   onClick={() => setHiddenTypes(prev => { const n = new Set(prev); n.has(type) ? n.delete(type) : n.add(type); return n })}
                   className={`flex items-center gap-1.5 w-full px-2 py-0.5 rounded text-xs transition-opacity ${hiddenTypes.has(type) ? 'opacity-25' : 'opacity-100'}`}
                 >
-                  <span className="w-3 h-3 rounded-sm shrink-0 border border-black/10" style={{ backgroundColor: cfg.bg }} />
                   <span className="text-gray-600 truncate">{cfg.icon} {cfg.label}</span>
                 </button>
               ))}
@@ -739,7 +755,7 @@ export default function CalendarPage() {
                           className={`absolute flex items-center gap-1 px-1.5 text-xs font-medium overflow-hidden z-10 transition-opacity ${dragging ? 'opacity-70 cursor-grabbing' : dim ? 'opacity-30 cursor-grab' : 'cursor-grab hover:brightness-95'}`}
                           style={{
                             left, width, top, height: TASK_H, borderRadius: radius,
-                            backgroundColor: cfg.bg, color: cfg.fg,
+                            backgroundColor: cropColors[seg.cropId], color: readableText(cropColors[seg.cropId]),
                             boxShadow: emph ? '0 0 0 1px rgba(43,97,23,0.9)'
                               : lunarMatch ? '0 0 0 2px rgba(34,197,94,0.75)'
                               : undefined,
