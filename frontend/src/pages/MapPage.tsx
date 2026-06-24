@@ -367,17 +367,17 @@ export default function MapPage() {
                     <div className="min-w-0 flex flex-col justify-center">
                       {n.phone && (
                         <button onClick={e => { e.stopPropagation(); copyPhone(n.phone!) }}
-                          className="text-base font-black text-gray-800 leading-tight truncate text-left hover:text-forest transition-colors"
+                          className="text-sm font-black text-gray-800 leading-tight truncate text-left hover:text-forest transition-colors"
                           title="Натисніть, щоб скопіювати">
                           {n.phone}
                         </button>
                       )}
-                      {n.address && <p className="text-xs text-gray-500 mt-0.5 truncate">{n.address}</p>}
+                      {n.address && <p className="text-[11px] text-gray-500 mt-0.5 truncate">{n.address}</p>}
                     </div>
                     <button onClick={e => { e.stopPropagation(); select() }}
-                      className="shrink-0 self-stretch group flex items-center justify-center gap-1.5 bg-[#7E8C6E] text-white font-bold text-base px-4 rounded-sm hover:bg-[#6f7d60] transition-colors">
+                      className="shrink-0 self-stretch group flex items-center justify-center gap-1.5 bg-[#7E8C6E] text-white font-bold text-sm px-3 rounded-sm hover:bg-[#6f7d60] transition-colors">
                       докладніше
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
                     </button>
                   </div>
                 </div>
