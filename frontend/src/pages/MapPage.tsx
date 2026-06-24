@@ -274,10 +274,10 @@ export default function MapPage() {
           <button
             onClick={findNearest}
             disabled={locating}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-forest/40 text-forest text-sm font-semibold hover:bg-forest/5 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-[#7E8C6E]/50 text-[#7E8C6E] text-sm font-semibold hover:bg-[#7E8C6E]/10 transition-colors disabled:opacity-50"
           >
             {locating
-              ? <span className="w-4 h-4 border-2 border-forest border-t-transparent rounded-full animate-spin" />
+              ? <span className="w-4 h-4 border-2 border-[#7E8C6E] border-t-transparent rounded-full animate-spin" />
               : <Navigation className="w-4 h-4" />
             }
             Знайти найближчий
@@ -301,7 +301,7 @@ export default function MapPage() {
               {tagFilters.size > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {[...tagFilters].map(t => (
-                    <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-forest text-white">
+                    <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#7E8C6E] text-white">
                       {t}
                       <button onClick={() => toggleTag(t)} className="hover:text-white/70 leading-none">×</button>
                     </span>
@@ -392,7 +392,7 @@ export default function MapPage() {
         >
           <Link
             to="/nurseries/register"
-            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-forest text-white text-sm font-bold uppercase tracking-wide hover:bg-forest-dark transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-[#7E8C6E] text-white text-sm font-bold uppercase tracking-wide hover:bg-[#6f7d60] transition-colors"
           >
             + Додати розсадник
           </Link>
@@ -455,7 +455,7 @@ export default function MapPage() {
                     rel="noopener noreferrer"
                     className="inline-block pt-1"
                   >
-                    <span className="px-3 py-1.5 bg-forest text-white text-xs font-semibold rounded-lg hover:bg-forest-dark inline-block">
+                    <span className="px-3 py-1.5 bg-[#7E8C6E] text-white text-xs font-semibold rounded-lg hover:bg-[#6f7d60] inline-block">
                       🗺️ Прокласти маршрут
                     </span>
                   </a>
@@ -536,7 +536,7 @@ export default function MapPage() {
                   <button key={`t-${t}`}
                     onClick={() => toggleTag(t)}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                      tagFilters.has(t) ? 'bg-forest text-white border-forest' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-forest/40'
+                      tagFilters.has(t) ? 'bg-[#7E8C6E] text-white border-[#7E8C6E]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#7E8C6E]/40'
                     }`}
                   >
                     {t}
@@ -573,7 +573,7 @@ export default function MapPage() {
             <a
               href={`https://maps.google.com/?q=${selected.latitude},${selected.longitude}`}
               target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-forest text-white text-sm font-bold uppercase tracking-wide hover:bg-forest-dark transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7E8C6E] text-white text-sm font-bold uppercase tracking-wide hover:bg-[#6f7d60] transition-colors"
             >
               🗺️ Прокласти маршрут
             </a>
