@@ -3,7 +3,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { Star, ChevronRight, Navigation } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 import api from '../lib/api'
+
+function copyPhone(phone: string) {
+  navigator.clipboard?.writeText(phone).then(
+    () => toast.success('Скопійовано!'),
+    () => toast.error('Не вдалось скопіювати'),
+  )
+}
 
 // No reviews table yet — derive a stable mock rating (4.5–4.9) from the id.
 function mockRating(id: string): number {
@@ -352,18 +360,24 @@ export default function MapPage() {
                   {cats && <p className="text-xs text-gray-600 mt-1.5 line-clamp-2">{cats}</p>}
 
                   {/* Green divider */}
-                  <div className="h-[2px] rounded-full bg-forest/30 my-2.5" />
+                  <div className="h-[3px] rounded-full bg-forest/40 my-2.5" />
 
                   {/* Phone (above) + address, with the details button */}
-                  <div className="flex items-end justify-between gap-2">
-                    <div className="min-w-0">
-                      {n.phone && <p className="text-base font-black text-gray-800 leading-tight truncate">{n.phone}</p>}
+                  <div className="flex items-stretch justify-between gap-2">
+                    <div className="min-w-0 flex flex-col justify-center">
+                      {n.phone && (
+                        <button onClick={e => { e.stopPropagation(); copyPhone(n.phone!) }}
+                          className="text-base font-black text-gray-800 leading-tight truncate text-left hover:text-forest transition-colors"
+                          title="Натисніть, щоб скопіювати">
+                          {n.phone}
+                        </button>
+                      )}
                       {n.address && <p className="text-xs text-gray-500 mt-0.5 truncate">{n.address}</p>}
                     </div>
                     <button onClick={e => { e.stopPropagation(); select() }}
-                      className="shrink-0 group flex items-center gap-0.5 bg-forest text-white font-bold text-xs px-3 py-1.5 rounded-sm hover:bg-forest-dark transition-colors">
+                      className="shrink-0 self-stretch group flex items-center justify-center gap-1.5 bg-forest text-white font-bold text-xs px-4 rounded-sm hover:bg-forest-dark transition-colors">
                       докладніше
-                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
                     </button>
                   </div>
                 </div>
