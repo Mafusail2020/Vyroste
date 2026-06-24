@@ -2,7 +2,7 @@ import * as L from 'leaflet'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import { MapPin, Phone, Star, ChevronRight, Navigation } from 'lucide-react'
+import { Star, ChevronRight, Navigation } from 'lucide-react'
 import api from '../lib/api'
 
 // No reviews table yet — derive a stable mock rating (4.5–4.9) from the id.
@@ -276,25 +276,34 @@ export default function MapPage() {
           </button>
 
           {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div className="space-y-2 pt-1">
+              {/* Add-tag dropdown (shows only not-yet-selected tags) */}
+              <select
+                value=""
+                onChange={e => { if (e.target.value) toggleTag(e.target.value) }}
+                className="w-full text-sm px-3 py-2 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-forest"
+              >
+                <option value="">+ Додати тег для фільтру…</option>
+                {allTags.filter(t => !tagFilters.has(t)).map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+
+              {/* Selected tags: delete one by one, or all at once */}
               {tagFilters.size > 0 && (
-                <button onClick={() => setTagFilters(new Set())}
-                  className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200">
-                  ✕ скинути ({tagFilters.size})
-                </button>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[...tagFilters].map(t => (
+                    <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-forest text-white">
+                      {t}
+                      <button onClick={() => toggleTag(t)} className="hover:text-white/70 leading-none">×</button>
+                    </span>
+                  ))}
+                  <button onClick={() => setTagFilters(new Set())}
+                    className="text-xs text-gray-400 hover:text-gray-600 underline ml-1">
+                    скинути всі
+                  </button>
+                </div>
               )}
-              {allTags.map(t => (
-                <button key={t}
-                  onClick={() => toggleTag(t)}
-                  className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
-                    tagFilters.has(t)
-                      ? 'bg-forest text-white border-forest'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-forest/40'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
             </div>
           )}
         </div>
@@ -314,7 +323,7 @@ export default function MapPage() {
             return (
               <div key={n.id}
                 onClick={select}
-                className={`rounded-xl border bg-white overflow-hidden cursor-pointer transition-shadow hover:shadow-md ${
+                className={`rounded-sm border bg-white overflow-hidden cursor-pointer transition-shadow hover:shadow-md ${
                   active ? 'border-forest ring-1 ring-forest' : 'border-gray-200'
                 }`}
                 style={{ animation: `mapFadeLeft 0.5s cubic-bezier(0.16,1,0.3,1) ${200 + i * 70}ms both` }}
@@ -340,18 +349,19 @@ export default function MapPage() {
                   </div>
 
                   {/* Categories */}
-                  {cats && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{cats}</p>}
+                  {cats && <p className="text-xs text-gray-600 mt-1.5 line-clamp-2">{cats}</p>}
 
-                  {/* Contacts */}
-                  <div className="mt-2 space-y-1 text-xs text-gray-500">
-                    {n.address && <p className="flex items-start gap-1.5"><MapPin className="w-3.5 h-3.5 shrink-0 mt-px text-gray-400" />{n.address}</p>}
-                    {n.phone && <p className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 shrink-0 text-gray-400" />{n.phone}</p>}
-                  </div>
+                  {/* Green divider */}
+                  <div className="h-[2px] rounded-full bg-forest/30 my-2.5" />
 
-                  {/* Details button */}
-                  <div className="flex justify-end mt-2">
+                  {/* Phone (above) + address, with the details button */}
+                  <div className="flex items-end justify-between gap-2">
+                    <div className="min-w-0">
+                      {n.phone && <p className="text-base font-black text-gray-800 leading-tight truncate">{n.phone}</p>}
+                      {n.address && <p className="text-xs text-gray-500 mt-0.5 truncate">{n.address}</p>}
+                    </div>
                     <button onClick={e => { e.stopPropagation(); select() }}
-                      className="group flex items-center gap-0.5 text-xs font-bold text-forest hover:text-forest-dark">
+                      className="shrink-0 group flex items-center gap-0.5 bg-forest text-white font-bold text-xs px-3 py-1.5 rounded-sm hover:bg-forest-dark transition-colors">
                       докладніше
                       <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </button>
