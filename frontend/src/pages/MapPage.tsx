@@ -2,7 +2,18 @@ import * as L from 'leaflet'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapPin, Phone, Star, ChevronRight, Navigation } from 'lucide-react'
 import api from '../lib/api'
+
+// No reviews table yet — derive a stable mock rating (4.5–4.9) from the id.
+function mockRating(id: string): number {
+  let h = 0
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return 4.5 + (h % 5) / 10
+}
+
+const COVER_PLACEHOLDER =
+  'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=600&q=60'
 
 /* ─── Custom DivIcon markers (no PNG imports needed) ─────────────────────── */
 
@@ -208,7 +219,7 @@ export default function MapPage() {
 
   if (loading) return (
     <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
-      <aside className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 p-4 gap-3">
+      <aside className="w-80 shrink-0 flex flex-col bg-white border-r border-gray-200 p-4 gap-3">
         <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-3/4" />
         <div className="animate-pulse bg-gray-200 rounded-lg h-10 w-full" />
         {[0, 1, 2].map(i => (
@@ -225,7 +236,7 @@ export default function MapPage() {
 
       {/* ── Sidebar ───────────────────────────────────────────────────── */}
       <aside
-        className="w-72 shrink-0 flex flex-col bg-white border-r border-gray-200 overflow-hidden"
+        className="w-80 shrink-0 flex flex-col bg-white border-r border-gray-200 overflow-hidden"
         style={{ animation: 'mapSlideLeft 0.65s cubic-bezier(0.16,1,0.3,1) both' }}
       >
 
@@ -259,7 +270,7 @@ export default function MapPage() {
           >
             {locating
               ? <span className="w-4 h-4 border-2 border-forest border-t-transparent rounded-full animate-spin" />
-              : <span>📍</span>
+              : <Navigation className="w-4 h-4" />
             }
             Знайти найближчий
           </button>
@@ -288,26 +299,67 @@ export default function MapPage() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {filtered.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-400 text-sm">
               <div className="text-3xl mb-2">🌱</div>
               <p>Розсадників не знайдено</p>
               <p className="text-xs mt-1 text-gray-300">Запустіть python scripts/seed_nurseries.py або додайте свій</p>
             </div>
-          ) : filtered.map((n, i) => (
-            <button key={n.id}
-              onClick={() => { setActiveId(n.id); setFlyTarget([n.latitude, n.longitude]) }}
-              className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${activeId === n.id ? 'bg-forest/5 border-l-2 border-l-forest' : ''}`}
-              style={{ animation: `mapFadeLeft 0.5s cubic-bezier(0.16,1,0.3,1) ${240 + i * 60}ms both` }}
-            >
-              <p className={`text-sm font-semibold truncate ${activeId === n.id ? 'text-forest' : 'text-gray-800'}`}>
-                {n.name}
-              </p>
-              {n.address && <p className="text-xs text-gray-400 mt-0.5 truncate">📍 {n.address}</p>}
-              {n.phone && <p className="text-xs text-gray-400 truncate">📞 {n.phone}</p>}
-            </button>
-          ))}
+          ) : filtered.map((n, i) => {
+            const active = activeId === n.id
+            const rating = mockRating(n.id)
+            const cats = (n.tags ?? []).join(', ')
+            const select = () => { setActiveId(n.id); setFlyTarget([n.latitude, n.longitude]) }
+            return (
+              <div key={n.id}
+                onClick={select}
+                className={`rounded-xl border bg-white overflow-hidden cursor-pointer transition-shadow hover:shadow-md ${
+                  active ? 'border-forest ring-1 ring-forest' : 'border-gray-200'
+                }`}
+                style={{ animation: `mapFadeLeft 0.5s cubic-bezier(0.16,1,0.3,1) ${200 + i * 70}ms both` }}
+              >
+                {/* Cover */}
+                <div className="h-36 bg-gray-100">
+                  <img src={n.photos?.[0] ?? COVER_PLACEHOLDER} alt={n.name} loading="lazy"
+                    className="w-full h-full object-cover" />
+                </div>
+
+                <div className="p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-400">Розсадник</p>
+                  <h3 className="font-bold text-gray-800 text-sm leading-tight">{n.name}</h3>
+
+                  {/* Rating */}
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-xs font-bold text-gray-700">{rating.toFixed(1)}</span>
+                    <div className="flex">
+                      {[0, 1, 2, 3, 4].map(s => (
+                        <Star key={s} className={`w-3 h-3 ${s < Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  {cats && <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{cats}</p>}
+
+                  {/* Contacts */}
+                  <div className="mt-2 space-y-1 text-xs text-gray-500">
+                    {n.address && <p className="flex items-start gap-1.5"><MapPin className="w-3.5 h-3.5 shrink-0 mt-px text-gray-400" />{n.address}</p>}
+                    {n.phone && <p className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 shrink-0 text-gray-400" />{n.phone}</p>}
+                  </div>
+
+                  {/* Details button */}
+                  <div className="flex justify-end mt-2">
+                    <button onClick={e => { e.stopPropagation(); select() }}
+                      className="group flex items-center gap-0.5 text-xs font-bold text-forest hover:text-forest-dark">
+                      докладніше
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         <div
