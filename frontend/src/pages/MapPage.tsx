@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { Star, ChevronRight, Navigation } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../lib/api'
+import NurseryDetailOverlay from '../components/NurseryDetailOverlay'
 
 function copyPhone(phone: string) {
   navigator.clipboard?.writeText(phone).then(
@@ -156,7 +157,6 @@ export default function MapPage() {
   const [locating,     setLocating]     = useState(false)
   const [activeId,     setActiveId]     = useState<string | null>(null)
   const [tagFilters,   setTagFilters]   = useState<Set<string>>(new Set())
-  const [panelWidth,   setPanelWidth]   = useState(384)
 
   function toggleTag(t: string) {
     setTagFilters(prev => {
@@ -164,26 +164,6 @@ export default function MapPage() {
       next.has(t) ? next.delete(t) : next.add(t)
       return next
     })
-  }
-  const resizing = useRef(false)
-
-  // Drag the panel's left edge to resize it.
-  useEffect(() => {
-    const move = (e: MouseEvent) => {
-      if (!resizing.current) return
-      const w = window.innerWidth - e.clientX
-      setPanelWidth(Math.min(Math.max(w, 340), Math.min(900, window.innerWidth * 0.75)))
-    }
-    const up = () => { resizing.current = false; document.body.style.userSelect = '' }
-    window.addEventListener('mousemove', move)
-    window.addEventListener('mouseup', up)
-    return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
-  }, [])
-
-  function startResize(e: React.MouseEvent) {
-    e.preventDefault()
-    resizing.current = true
-    document.body.style.userSelect = 'none'
   }
 
   useEffect(() => {
@@ -466,119 +446,10 @@ export default function MapPage() {
         </MapContainer>
       </div>
 
-      {/* ── Drag handle to resize the detail panel ────────────────────── */}
+
+      {/* Full-screen detail overlay opens over the map */}
       {selected && (
-        <div
-          onMouseDown={startResize}
-          title="Перетягніть, щоб змінити ширину"
-          className="w-1.5 shrink-0 cursor-col-resize bg-gray-200 hover:bg-forest/40 active:bg-forest/60 transition-colors"
-        />
-      )}
-
-      {/* ── Right detail panel — slides in on marker/list click ───────── */}
-      {selected && (
-        <aside
-          key={selected.id}
-          className="shrink-0 bg-white border-l border-gray-200 overflow-y-auto"
-          style={{ width: panelWidth, animation: 'mapSlideRight 0.4s cubic-bezier(0.16,1,0.3,1) both' }}
-        >
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-5 pt-4 pb-3 flex items-start gap-3">
-            <div className="flex-1 min-w-0">
-              <h2 className="font-black text-lg text-forest leading-tight">{selected.name}</h2>
-              {selected.address && <p className="text-xs text-gray-400 mt-0.5">📍 {selected.address}</p>}
-            </div>
-            <button
-              onClick={() => setActiveId(null)}
-              className="shrink-0 w-7 h-7 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 text-lg leading-none flex items-center justify-center"
-              title="Закрити"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="p-5 space-y-5">
-            {/* Photos */}
-            {(selected.photos?.length ?? 0) > 0 && (
-              <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-                {selected.photos!.map((src, i) => (
-                  <img key={i} src={src} alt={`${selected.name} ${i + 1}`}
-                    className="h-40 w-auto rounded-xl object-cover shrink-0 border border-gray-100" loading="lazy" />
-                ))}
-              </div>
-            )}
-
-            {/* Videos */}
-            {(selected.videos?.length ?? 0) > 0 && (
-              <div className="space-y-2">
-                {selected.videos!.map((url, i) => (
-                  /youtu\.?be/.test(url) ? (
-                    <iframe key={i} src={url.replace('watch?v=', 'embed/')}
-                      className="w-full aspect-video rounded-xl border border-gray-100"
-                      allowFullScreen title={`video-${i}`} />
-                  ) : (
-                    <video key={i} src={url} controls
-                      className="w-full rounded-xl border border-gray-100 bg-black" />
-                  )
-                ))}
-              </div>
-            )}
-
-            {/* Tags + admin badges */}
-            {((selected.tags?.length ?? 0) > 0 || (selected.admin_tags?.length ?? 0) > 0) && (
-              <div className="flex flex-wrap gap-1.5">
-                {selected.admin_tags?.map(t => (
-                  <span key={`a-${t}`} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-forest/10 text-forest border border-forest/20">
-                    ✓ {t}
-                  </span>
-                ))}
-                {selected.tags?.map(t => (
-                  <button key={`t-${t}`}
-                    onClick={() => toggleTag(t)}
-                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                      tagFilters.has(t) ? 'bg-[#7E8C6E] text-white border-[#7E8C6E]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-[#7E8C6E]/40'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Description */}
-            {selected.description && (
-              <p className="text-sm text-gray-600 leading-relaxed">{selected.description}</p>
-            )}
-
-            {/* Contacts */}
-            <div className="space-y-2 text-sm border-t border-gray-100 pt-4">
-              {selected.phone && (
-                <a href={`tel:${selected.phone}`} className="flex items-center gap-2 text-gray-600 hover:text-forest">
-                  <span>📞</span> {selected.phone}
-                </a>
-              )}
-              {selected.email && (
-                <a href={`mailto:${selected.email}`} className="flex items-center gap-2 text-gray-600 hover:text-forest">
-                  <span>✉️</span> {selected.email}
-                </a>
-              )}
-              {selected.website && (
-                <a href={selected.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-600 hover:text-forest">
-                  <span>🌐</span> {selected.website.replace(/^https?:\/\//, '')}
-                </a>
-              )}
-            </div>
-
-            {/* Route */}
-            <a
-              href={`https://maps.google.com/?q=${selected.latitude},${selected.longitude}`}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#7E8C6E] text-white text-sm font-bold uppercase tracking-wide hover:bg-[#6f7d60] transition-colors"
-            >
-              🗺️ Прокласти маршрут
-            </a>
-          </div>
-        </aside>
+        <NurseryDetailOverlay nursery={selected} onClose={() => setActiveId(null)} />
       )}
     </div>
   )
