@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Star, MapPin, Phone, Globe, ChevronLeft, ChevronRight,
   ChevronDown, ThumbsUp, ThumbsDown, ArrowLeft,
 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 /* ─── lucide has no brand icons in this version → inline SVG socials ──────── */
 function YTIcon() {
@@ -58,10 +60,10 @@ const PRICE_SECTIONS = [
 ]
 
 const REVIEWS = [
-  { id: 1, name: 'Вася', date: '01.01.2026', rating: 4, text: 'Гарний розсадник, саджанці прийнялися всі. Консультація на висоті, рекомендую усім сусідам.' },
-  { id: 2, name: 'Оля', date: '15.12.2025', rating: 5, text: 'Замовляла яблуні — приїхали з закритою кореневою системою, упаковано дбайливо. Дуже задоволена.' },
-  { id: 3, name: 'Петро', date: '03.11.2025', rating: 4, text: 'Ціни адекватні, асортимент великий. Доставка Новою поштою без проблем.' },
-  { id: 4, name: 'Ірина', date: '20.10.2025', rating: 4, text: 'Брала сливи та груші. Все прижилось, навесні буде видно врожай. Дякую за поради щодо посадки.' },
+  { id: 1, name: 'Вася',  date: '01.01.2026', rating: 4, likes: 12, dislikes: 1, text: 'Гарний розсадник, саджанці прийнялися всі. Консультація на висоті, рекомендую усім сусідам.' },
+  { id: 2, name: 'Оля',   date: '15.12.2025', rating: 5, likes: 8,  dislikes: 0, text: 'Замовляла яблуні — приїхали з закритою кореневою системою, упаковано дбайливо. Дуже задоволена.' },
+  { id: 3, name: 'Петро', date: '03.11.2025', rating: 4, likes: 5,  dislikes: 2, text: 'Ціни адекватні, асортимент великий. Доставка Новою поштою без проблем.' },
+  { id: 4, name: 'Ірина', date: '20.10.2025', rating: 4, likes: 3,  dislikes: 0, text: 'Брала сливи та груші. Все прижилось, навесні буде видно врожай. Дякую за поради щодо посадки.' },
 ]
 
 /* ─── Star row ───────────────────────────────────────────────────────────── */
@@ -80,13 +82,21 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
   nursery: NurseryLike
   onClose: () => void
 }) {
+  const { user } = useAuth()
   const photos = nursery.photos?.length ? nursery.photos : PHOTO_FALLBACK
   const videos = nursery.videos ?? []
+  const reviewCount = REVIEWS.length
+  const avgRating = REVIEWS.reduce((s, r) => s + r.rating, 0) / (reviewCount || 1)
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Яблуні']))
   const [vid, setVid] = useState(0)
-  const [form, setForm] = useState({ name: '', email: '', rating: 0, text: '' })
+  const [form, setForm] = useState({ rating: 0, text: '' })
   const [submitted, setSubmitted] = useState(false)
+  const [votes, setVotes] = useState<Record<number, 'up' | 'down' | undefined>>({})
+
+  function vote(id: number, dir: 'up' | 'down') {
+    setVotes(v => ({ ...v, [id]: v[id] === dir ? undefined : dir }))
+  }
 
   function toggleSection(name: string) {
     setOpenSections(prev => {
@@ -99,9 +109,11 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
   function submitReview(e: React.FormEvent) {
     e.preventDefault()
     // Moderation: do NOT add to the list — send for review, clear, confirm.
-    setForm({ name: '', email: '', rating: 0, text: '' })
+    setForm({ rating: 0, text: '' })
     setSubmitted(true)
   }
+
+  const userName = user?.email?.split('@')[0] ?? ''
 
   /* ── Gallery: layout adapts to image count ── */
   function Gallery() {
@@ -154,9 +166,9 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">{nursery.name}</h1>
 
           <div className="flex items-center gap-2 mt-1.5 mb-4">
-            <span className="text-sm font-bold text-gray-700">4,9</span>
-            <Stars value={5} />
-            <span className="text-sm text-gray-400">(22)</span>
+            <span className="text-sm font-bold text-gray-700">{avgRating.toFixed(1).replace('.', ',')}</span>
+            <Stars value={avgRating} />
+            <span className="text-sm text-gray-400">({reviewCount})</span>
           </div>
 
           {nursery.description && <p className="text-sm text-gray-500 leading-relaxed mb-6">{nursery.description}</p>}
@@ -195,12 +207,19 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
 
         {/* ── Right: map + contacts + videos ── */}
         <div className="space-y-5">
-          {/* Mini map */}
-          <a href={`https://maps.google.com/?q=${nursery.latitude},${nursery.longitude}`} target="_blank" rel="noreferrer"
-            className="block h-36 bg-cover bg-center border border-gray-200"
-            style={{ backgroundImage: `url(https://staticmap.openstreetmap.de/staticmap.php?center=${nursery.latitude},${nursery.longitude}&zoom=14&size=400x200&markers=${nursery.latitude},${nursery.longitude},blue-pushpin)` }}
-            title="Відкрити в картах"
-          />
+          {/* Mini map (OSM embed) */}
+          <div className="border border-gray-200">
+            <iframe
+              title="Розташування"
+              loading="lazy"
+              className="w-full h-36 block"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${nursery.longitude - 0.012}%2C${nursery.latitude - 0.008}%2C${nursery.longitude + 0.012}%2C${nursery.latitude + 0.008}&layer=mapnik&marker=${nursery.latitude}%2C${nursery.longitude}`}
+            />
+            <a href={`https://maps.google.com/?q=${nursery.latitude},${nursery.longitude}`} target="_blank" rel="noreferrer"
+              className="block text-center text-xs text-[#65814f] py-1 hover:underline border-t border-gray-200">
+              Відкрити в картах →
+            </a>
+          </div>
 
           {/* Contacts */}
           <div className="space-y-3 text-sm">
@@ -231,31 +250,33 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
             </div>
           </div>
 
-          {/* Video carousel */}
+          {/* Video carousel — arrows outside, round; smaller video */}
           {videos.length > 0 && (
             <div>
-              <div className="relative bg-black aspect-video border border-gray-200">
-                {/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(videos[vid])
-                  ? <iframe src={videos[vid].replace('watch?v=', 'embed/')} title="video" className="w-full h-full" allowFullScreen />
-                  : <video src={videos[vid]} controls className="w-full h-full" />}
+              <div className="flex items-center gap-2">
                 {videos.length > 1 && (
-                  <>
-                    <button onClick={() => setVid(v => (v - 1 + videos.length) % videos.length)}
-                      className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 text-white flex items-center justify-center hover:bg-black/70">
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => setVid(v => (v + 1) % videos.length)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 text-white flex items-center justify-center hover:bg-black/70">
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </>
+                  <button onClick={() => setVid(v => (v - 1 + videos.length) % videos.length)}
+                    className="shrink-0 w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 transition-colors">
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <div className="flex-1 bg-black aspect-video border border-gray-200 overflow-hidden">
+                  {/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(videos[vid])
+                    ? <iframe src={videos[vid].replace('watch?v=', 'embed/')} title="video" className="w-full h-full" allowFullScreen />
+                    : <video src={videos[vid]} controls className="w-full h-full" />}
+                </div>
+                {videos.length > 1 && (
+                  <button onClick={() => setVid(v => (v + 1) % videos.length)}
+                    className="shrink-0 w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 transition-colors">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 )}
               </div>
               {videos.length > 1 && (
                 <div className="flex justify-center gap-1.5 mt-2">
                   {videos.map((_, i) => (
                     <button key={i} onClick={() => setVid(i)}
-                      className={`w-2 h-2 rounded-full ${i === vid ? 'bg-gray-700' : 'bg-gray-300'}`} />
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${i === vid ? 'bg-[#65814f]' : 'bg-gray-300'}`} />
                   ))}
                 </div>
               )}
@@ -266,7 +287,7 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
 
       {/* ── Reviews ── */}
       <div className="max-w-7xl mx-auto px-4 pb-16">
-        <h2 className="text-2xl font-black text-gray-800 mb-6">22 відгука про {nursery.name}</h2>
+        <h2 className="text-2xl font-black text-gray-800 mb-6">{reviewCount} відгуків про {nursery.name}</h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
 
@@ -290,11 +311,19 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
                     <p className="text-sm text-gray-700 mt-2 leading-relaxed">{r.text}</p>
                     <div className="flex items-center justify-end gap-2 mt-3 text-xs text-gray-600">
                       <span>Чи був відгук корисним</span>
-                      <button className="w-6 h-6 rounded-full bg-[#a9c08f] flex items-center justify-center hover:bg-[#97b07b]">
+                      <button onClick={() => vote(r.id, 'up')}
+                        className={`flex items-center gap-1 px-1.5 h-6 rounded-full transition-colors ${
+                          votes[r.id] === 'up' ? 'bg-[#65814f]' : 'bg-[#a9c08f] hover:bg-[#97b07b]'
+                        }`}>
                         <ThumbsUp className="w-3 h-3 text-white" />
+                        <span className="text-white font-semibold">{r.likes + (votes[r.id] === 'up' ? 1 : 0)}</span>
                       </button>
-                      <button className="w-6 h-6 rounded-full bg-[#a9c08f] flex items-center justify-center hover:bg-[#97b07b]">
+                      <button onClick={() => vote(r.id, 'down')}
+                        className={`flex items-center gap-1 px-1.5 h-6 rounded-full transition-colors ${
+                          votes[r.id] === 'down' ? 'bg-[#9c6b5a]' : 'bg-[#a9c08f] hover:bg-[#97b07b]'
+                        }`}>
                         <ThumbsDown className="w-3 h-3 text-white" />
+                        <span className="text-white font-semibold">{r.dislikes + (votes[r.id] === 'down' ? 1 : 0)}</span>
                       </button>
                     </div>
                   </div>
@@ -312,18 +341,19 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
               <div className="bg-white p-4 text-sm text-[#4f6640] font-semibold rounded-sm">
                 ✓ Ваш відгук успішно відправлено на перевірку модератору.
               </div>
+            ) : !user ? (
+              <div className="bg-white p-4 text-sm text-gray-600 rounded-sm">
+                Щоб залишити відгук, <Link to="/login" className="text-[#65814f] font-semibold hover:underline">увійдіть</Link> у свій акаунт.
+              </div>
             ) : (
               <form onSubmit={submitReview} className="space-y-3">
+                {/* Review is posted from the logged-in account */}
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-9 h-9 rounded-full bg-gray-500 shrink-0" />
-                  <span className="text-sm text-gray-700">Ваше ім'я</span>
+                  <div className="w-9 h-9 rounded-full bg-[#65814f] text-white flex items-center justify-center text-sm font-bold shrink-0 uppercase">
+                    {userName.charAt(0)}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 truncate">{userName}</span>
                 </div>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  required placeholder="Ваше ім'я"
-                  className="w-full bg-white px-3 py-2 text-sm border border-gray-300 focus:outline-none focus:border-[#65814f]" />
-                <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  type="email" required placeholder="Електронна пошта"
-                  className="w-full bg-white px-3 py-2 text-sm border border-gray-300 focus:outline-none focus:border-[#65814f]" />
 
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(s => (
