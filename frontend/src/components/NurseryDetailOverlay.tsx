@@ -73,6 +73,8 @@ const PRICE_SECTIONS = [
   { name: 'Ялинки', rows: [{ name: 'Ялина блакитна', age: '3 роки', price: '250 грн' }] },
 ]
 
+const RATING_LABELS = ['Жахливо', 'Погано', 'Нормально', 'Добре', 'Чудово']
+
 /* ─── Star row ───────────────────────────────────────────────────────────── */
 function Stars({ value, size = 'w-4 h-4' }: { value: number; size?: string }) {
   return (
@@ -390,12 +392,23 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
                   <span className="text-sm font-semibold text-gray-700 truncate">{userName}</span>
                 </div>
 
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <button key={s} type="button" onClick={() => setForm(f => ({ ...f, rating: s }))}>
-                      <Star className={`w-7 h-7 ${s <= form.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-400'}`} />
-                    </button>
-                  ))}
+                <div className="flex gap-2">
+                  {RATING_LABELS.map((label, idx) => {
+                    const s = idx + 1
+                    const onAt = s <= form.rating
+                    return (
+                      <button key={s} type="button" onClick={() => setForm(f => ({ ...f, rating: s }))}
+                        className="flex-1 flex flex-col items-center gap-1">
+                        <Star
+                          className={`w-full h-auto ${onAt ? 'text-amber-400 fill-amber-400' : 'text-gray-400'}`}
+                          strokeLinejoin="miter" strokeWidth={1.25}
+                        />
+                        <span className={`text-[11px] text-center leading-tight ${s === form.rating ? 'text-gray-800 font-bold' : 'text-gray-400'}`}>
+                          {label}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
 
                 <textarea value={form.text} onChange={e => setForm(f => ({ ...f, text: e.target.value }))}

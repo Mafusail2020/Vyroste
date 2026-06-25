@@ -33,6 +33,16 @@ interface BlogPost {
   created_at: string
 }
 
+interface PendingReview {
+  id: string
+  nursery_id: string
+  nursery_name: string | null
+  author_name: string | null
+  rating: number
+  text: string
+  created_at: string
+}
+
 interface Profile { is_admin: boolean }
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
@@ -79,11 +89,15 @@ function emptyForm() {
 export default function AdminPage() {
   const [isAdmin,   setIsAdmin]   = useState<boolean | null>(null)
   const [pageLoad,  setPageLoad]  = useState(true)
-  const [activeTab, setActiveTab] = useState<'nurseries' | 'blog'>('nurseries')
+  const [activeTab, setActiveTab] = useState<'nurseries' | 'reviews' | 'blog'>('nurseries')
 
   // Nurseries
   const [nurseries, setNurseries] = useState<Nursery[]>([])
   const [acting,    setActing]    = useState<string | null>(null)
+
+  // Reviews (moderation)
+  const [reviews,        setReviews]        = useState<PendingReview[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
 
   // Blog
   const [posts,       setPosts]       = useState<BlogPost[]>([])
@@ -116,6 +130,29 @@ export default function AdminPage() {
       .then(r => setPosts(r.data))
       .catch(() => toast.error('Не вдалось завантажити статті'))
       .finally(() => setBlogLoading(false))
+  }
+
+  /* ── Load pending reviews when tab switched ── */
+  useEffect(() => {
+    if (activeTab !== 'reviews' || !isAdmin) return
+    setReviewsLoading(true)
+    api.get<PendingReview[]>('/api/admin/reviews')
+      .then(r => setReviews(r.data))
+      .catch(() => toast.error('Не вдалось завантажити відгуки'))
+      .finally(() => setReviewsLoading(false))
+  }, [activeTab, isAdmin])
+
+  async function moderateReview(id: string, status: 'approved' | 'rejected') {
+    setActing(id)
+    try {
+      await api.patch(`/api/admin/reviews/${id}`, { status })
+      setReviews(prev => prev.filter(r => r.id !== id))
+      toast.success(status === 'approved' ? 'Відгук схвалено' : 'Відгук відхилено')
+    } catch {
+      toast.error('Помилка. Спробуйте ще раз.')
+    } finally {
+      setActing(null)
+    }
   }
 
   /* ── Nursery actions ── */
@@ -222,11 +259,15 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-8 w-fit">
-        {(['nurseries', 'blog'] as const).map(tab => (
+        {(['nurseries', 'reviews', 'blog'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-150
               ${activeTab === tab ? 'bg-white text-forest shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            {tab === 'nurseries' ? `🏡 Розсадники ${nurseries.length > 0 ? `(${nurseries.length})` : ''}` : '📝 Блог'}
+            {tab === 'nurseries'
+              ? `🏡 Розсадники ${nurseries.length > 0 ? `(${nurseries.length})` : ''}`
+              : tab === 'reviews'
+              ? `⭐ Відгуки ${reviews.length > 0 ? `(${reviews.length})` : ''}`
+              : '📝 Блог'}
           </button>
         ))}
       </div>
@@ -280,6 +321,63 @@ export default function AdminPage() {
                         className="px-4 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-xl hover:bg-gray-50 transition-colors text-center">
                         🗺️ Перевірити місце
                       </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── REVIEWS TAB ────────────────────────────────────────────────── */}
+      {activeTab === 'reviews' && (
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-black text-sm uppercase tracking-wide text-gray-700">Відгуки на модерації</h2>
+            <span className="text-sm font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full">
+              {reviews.length} очікують
+            </span>
+          </div>
+
+          {reviewsLoading ? (
+            <div className="space-y-3">
+              {[0, 1, 2].map(i => <div key={i} className="bg-white rounded-2xl border border-gray-200 h-28 animate-pulse" />)}
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              <div className="text-4xl mb-3">✅</div>
+              <p>Немає відгуків на перевірці</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map(r => (
+                <div key={r.id} className="bg-white border border-gray-200 rounded-2xl p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-bold text-gray-800">{r.author_name || 'Користувач'}</span>
+                        <span className="flex">
+                          {[0, 1, 2, 3, 4].map(s => (
+                            <span key={s} className={s < r.rating ? 'text-amber-400' : 'text-gray-300'}>★</span>
+                          ))}
+                        </span>
+                        <span className="text-xs text-gray-400">· {new Date(r.created_at).toLocaleDateString('uk-UA')}</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mb-2">Розсадник: <span className="font-semibold text-gray-600">{r.nursery_name ?? r.nursery_id}</span></p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{r.text}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <button onClick={() => moderateReview(r.id, 'approved')} disabled={acting === r.id}
+                        className="px-4 py-2 bg-forest text-white text-sm font-bold rounded-xl hover:bg-forest-dark transition-colors disabled:opacity-40 flex items-center gap-1.5">
+                        {acting === r.id
+                          ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          : '✓'} Схвалити
+                      </button>
+                      <button onClick={() => moderateReview(r.id, 'rejected')} disabled={acting === r.id}
+                        className="px-4 py-2 border-2 border-red-200 text-red-500 text-sm font-bold rounded-xl hover:bg-red-50 transition-colors disabled:opacity-40">
+                        ✗ Відхилити
+                      </button>
                     </div>
                   </div>
                 </div>
