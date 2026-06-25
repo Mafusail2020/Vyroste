@@ -9,17 +9,19 @@ import api from '../lib/api'
 interface Props {
   initialContent: JSONContent | null
   onChange: (doc: JSONContent) => void
+  uploadUrl?: string
+  placeholder?: string
 }
 
 // Remount (via `key`) when switching articles so the editor re-seeds content.
-export default function TipTapEditor({ initialContent, onChange }: Props) {
+export default function TipTapEditor({ initialContent, onChange, uploadUrl = '/api/knowledge/upload', placeholder = 'Почніть писати статтю…' }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image,
-      Placeholder.configure({ placeholder: 'Почніть писати статтю…' }),
+      Placeholder.configure({ placeholder }),
     ],
     content: initialContent && 'type' in initialContent ? initialContent : '',
     onUpdate: ({ editor }) => onChange(editor.getJSON()),
@@ -34,7 +36,7 @@ export default function TipTapEditor({ initialContent, onChange }: Props) {
     const fd = new FormData()
     fd.append('file', file)
     try {
-      const r = await api.post<{ url: string }>('/api/knowledge/upload', fd, {
+      const r = await api.post<{ url: string }>(uploadUrl, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       editor!.chain().focus().setImage({ src: r.data.url }).run()

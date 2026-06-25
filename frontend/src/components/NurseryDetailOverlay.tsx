@@ -19,6 +19,8 @@ function IGIcon() {
 }
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
+interface PriceSection { name: string; rows: { name: string; age: string; price: string }[] }
+
 interface NurseryLike {
   id: string
   name: string
@@ -26,10 +28,14 @@ interface NurseryLike {
   address: string | null
   phone: string | null
   website: string | null
+  youtube: string | null
+  facebook: string | null
+  instagram: string | null
   latitude: number
   longitude: number
   photos: string[] | null
   videos: string[] | null
+  price_sections: PriceSection[] | null
 }
 
 interface Review {
@@ -51,27 +57,6 @@ const PHOTO_FALLBACK = [
   'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=600&q=70',
   'https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&w=600&q=70',
   'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=600&q=70',
-]
-
-const PRICE_SECTIONS = [
-  {
-    name: 'Яблуні',
-    rows: [
-      { name: 'Яблуня Чемпіон', age: '2 роки', price: '100 грн' },
-      { name: 'Яблуня Голден', age: '2 роки', price: '120 грн' },
-      { name: 'Яблуня Айдаред', age: '3 роки', price: '150 грн' },
-      { name: 'Яблуня Фуджі', age: '2 роки', price: '110 грн' },
-    ],
-  },
-  {
-    name: 'Сливи',
-    rows: [
-      { name: 'Слива Угорка', age: '2 роки', price: '90 грн' },
-      { name: 'Слива Ренклод', age: '2 роки', price: '95 грн' },
-    ],
-  },
-  { name: 'Груші', rows: [{ name: 'Груша Конференція', age: '2 роки', price: '130 грн' }] },
-  { name: 'Ялинки', rows: [{ name: 'Ялина блакитна', age: '3 роки', price: '250 грн' }] },
 ]
 
 const RATING_LABELS = ['Жахливо', 'Погано', 'Нормально', 'Добре', 'Чудово']
@@ -96,7 +81,7 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
   const photos = nursery.photos?.length ? nursery.photos : PHOTO_FALLBACK
   const videos = nursery.videos ?? []
 
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Яблуні']))
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set())
   const [vid, setVid] = useState(0)
   const [form, setForm] = useState({ rating: 0, text: '' })
   const [submitted, setSubmitted] = useState(false)
@@ -217,38 +202,43 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
             <span className="text-sm text-gray-400">({count})</span>
           </div>
 
-          {nursery.description && <p className="text-sm text-gray-500 leading-relaxed mb-6">{nursery.description}</p>}
+          {nursery.description && (
+            <div className="prose-article text-sm text-gray-600 mb-6" dangerouslySetInnerHTML={{ __html: nursery.description }} />
+          )}
 
-          <p className="text-sm font-bold text-gray-600 mb-2">Прайс ▾</p>
-          <div className="border border-gray-200">
-            {PRICE_SECTIONS.map(sec => {
-              const open = openSections.has(sec.name)
-              return (
-                <div key={sec.name}>
-                  <button onClick={() => toggleSection(sec.name)}
-                    className="w-full flex items-center justify-between px-4 py-2 bg-[#81996c] text-white font-bold text-sm">
-                    {sec.name}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${open ? '' : '-rotate-90'}`} />
-                  </button>
-                  {open && (
-                    <table className="w-full text-sm">
-                      <tbody>
-                        {sec.rows.map((r, i) => (
-                          <tr key={i} className={i % 2 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="px-4 py-1.5 border-b border-gray-100 text-gray-700">{r.name}</td>
-                            <td className="px-4 py-1.5 border-b border-gray-100 text-gray-500 w-24">{r.age}</td>
-                            <td className="px-4 py-1.5 border-b border-gray-100 text-gray-700 w-24 text-right">{r.price}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          <p className="mt-6 text-sm font-bold text-gray-700">Доставка Нова пошта, Укрпошта, Самовивіз</p>
+          {/* Price table — only when the owner added one */}
+          {(nursery.price_sections?.length ?? 0) > 0 && (
+            <>
+              <p className="text-sm font-bold text-gray-600 mb-2">Прайс ▾</p>
+              <div className="border border-gray-200">
+                {nursery.price_sections!.map(sec => {
+                  const open = !openSections.has(sec.name)   // sections open by default
+                  return (
+                    <div key={sec.name}>
+                      <button onClick={() => toggleSection(sec.name)}
+                        className="w-full flex items-center justify-between px-4 py-2 bg-[#81996c] text-white font-bold text-sm">
+                        {sec.name}
+                        <ChevronDown className={`w-4 h-4 transition-transform ${open ? '' : '-rotate-90'}`} />
+                      </button>
+                      {open && (
+                        <table className="w-full text-sm">
+                          <tbody>
+                            {sec.rows.map((r, i) => (
+                              <tr key={i} className={i % 2 ? 'bg-gray-50' : 'bg-white'}>
+                                <td className="px-4 py-1.5 border-b border-gray-100 text-gray-700">{r.name}</td>
+                                <td className="px-4 py-1.5 border-b border-gray-100 text-gray-500 w-24">{r.age}</td>
+                                <td className="px-4 py-1.5 border-b border-gray-100 text-gray-700 w-24 text-right">{r.price}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Right: map + contacts + videos ── */}
@@ -287,13 +277,23 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
                 <Globe className="w-4 h-4 text-gray-500" /> {cleanUrl(nursery.website)}
               </a>
             )}
-            <div className="flex gap-2 pt-1">
-              {[YTIcon, FBIcon, IGIcon].map((Icon, i) => (
-                <span key={i} className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-[#65814f] transition-colors">
-                  <Icon />
-                </span>
-              ))}
-            </div>
+            {(() => {
+              const socials = [
+                { url: nursery.youtube, Icon: YTIcon },
+                { url: nursery.facebook, Icon: FBIcon },
+                { url: nursery.instagram, Icon: IGIcon },
+              ].filter(s => s.url)
+              return socials.length > 0 ? (
+                <div className="flex gap-2 pt-1">
+                  {socials.map(({ url, Icon }, i) => (
+                    <a key={i} href={url!} target="_blank" rel="noreferrer"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-[#65814f] transition-colors">
+                      <Icon />
+                    </a>
+                  ))}
+                </div>
+              ) : null
+            })()}
           </div>
 
           {/* Video carousel — arrows outside, round; smaller video */}

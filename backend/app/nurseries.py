@@ -87,19 +87,23 @@ async def get_nursery(nursery_id: str):
 
 class NurseryCreate(BaseModel):
     name: str
-    description: str | None = None
+    description: str | None = None     # rich HTML (TipTap output)
     address: str | None = None
     latitude: float
     longitude: float
     phone: str | None = None
     email: str | None = None
     website: str | None = None
+    youtube: str | None = None
+    facebook: str | None = None
+    instagram: str | None = None
     region_id: str | None = None
     crops_available: list[str] = []
     # Owner-managed media + tags. admin_tags are intentionally NOT accepted here.
     photos: list[str] = []
     videos: list[str] = []
     tags: list[str] = []
+    price_sections: list[dict] = []    # [{name, rows:[{name,age,price}]}]
 
 
 class NurseryUpdate(BaseModel):
@@ -109,10 +113,14 @@ class NurseryUpdate(BaseModel):
     phone: str | None = None
     email: str | None = None
     website: str | None = None
+    youtube: str | None = None
+    facebook: str | None = None
+    instagram: str | None = None
     crops_available: list[str] | None = None
     photos: list[str] | None = None
     videos: list[str] | None = None
     tags: list[str] | None = None
+    price_sections: list[dict] | None = None
 
 
 class AdminTags(BaseModel):
@@ -158,11 +166,15 @@ async def create_nursery(
         "phone":            body.phone,
         "email":            body.email,
         "website":          body.website,
+        "youtube":          body.youtube,
+        "facebook":         body.facebook,
+        "instagram":        body.instagram,
         "region_id":        body.region_id,
         "crops_available":  body.crops_available,
         "photos":           body.photos,
         "videos":           body.videos,
         "tags":             body.tags,
+        "price_sections":   body.price_sections,
         "owner_id":         current_user["id"],
         "status":           "pending",
     }).execute()

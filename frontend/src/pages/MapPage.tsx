@@ -56,11 +56,15 @@ interface Nursery {
   phone: string | null
   email: string | null
   website: string | null
+  youtube: string | null
+  facebook: string | null
+  instagram: string | null
   region_id: string | null
   photos: string[] | null
   videos: string[] | null
   tags: string[] | null
   admin_tags: string[] | null
+  price_sections: { name: string; rows: { name: string; age: string; price: string }[] }[] | null
   review_count: number
   avg_rating: number | null
 }
