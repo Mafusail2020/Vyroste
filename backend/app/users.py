@@ -1,12 +1,16 @@
 import threading
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, EmailStr
 from app.auth import get_current_user
 from app.deps import get_supabase
 from app.email import send_welcome_email
 
 router = APIRouter(prefix="/users")
+
+AVATAR_BUCKET = "avatars"
+MAX_AVATAR_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
 class RegisterRequest(BaseModel):
@@ -54,20 +58,48 @@ async def me(current_user: dict = Depends(get_current_user)):
 class ProfileUpdate(BaseModel):
     region_id: str | None = None
     plot_type: str | None = None
+    display_name: str | None = None
+    avatar_url: str | None = None
 
 
 @router.patch("/me")
 async def update_me(body: ProfileUpdate, current_user: dict = Depends(get_current_user)):
-    """Cabinet settings: change region / plot type."""
+    """Cabinet settings: change region / plot type / display name / avatar."""
     sb = get_supabase()
     patch = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
     if "plot_type" in patch and patch["plot_type"] not in {"balcony", "dacha", "garden"}:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid plot_type")
+    if "display_name" in patch:
+        patch["display_name"] = patch["display_name"].strip()[:80]
     if not patch:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Nothing to update")
 
     res = sb.table("user_profiles").upsert({"id": current_user["id"], **patch}).execute()
     return res.data[0]
+
+
+@router.post("/me/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Upload an avatar image → Supabase Storage; returns its public URL."""
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Only image uploads are allowed")
+    blob = await file.read()
+    if len(blob) > MAX_AVATAR_BYTES:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Image too large (max 2 MB)")
+
+    ext = (file.filename or "img").rsplit(".", 1)[-1].lower()
+    path = f"{current_user['id']}/{uuid.uuid4().hex}.{ext}"
+    sb = get_supabase()
+    try:
+        sb.storage.from_(AVATAR_BUCKET).upload(
+            path, blob, {"content-type": file.content_type, "upsert": "false"}
+        )
+    except Exception as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Upload failed: {e}")
+    return {"url": sb.storage.from_(AVATAR_BUCKET).get_public_url(path)}
 
 
 # ── Saved articles (Knowledge-Base bookmarks) ───────────────────────────────

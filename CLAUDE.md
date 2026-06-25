@@ -125,10 +125,15 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
   - `MapPage.tsx`: left list + map + right detail panel that slides in on marker click
     (photos, videos, tags/admin badges, contacts, route); hidden until a marker is selected.
 - [x] Slice 16 — Персональний кабінет
-  - Migration: `backend/migrations/010_saved_articles.sql` (saved_articles, owner RLS;
-    article_id is a plain uuid — Knowledge Base ships later)
-  - `PATCH /api/users/me` (region/plot_type); `GET/POST/DELETE /api/users/me/saved-articles`
+  - Migrations: `backend/migrations/010_saved_articles.sql` (saved_articles, owner RLS;
+    article_id is a plain uuid — Knowledge Base ships later),
+    `014_user_profile_avatar_name.sql` (`display_name` + `avatar_url` on user_profiles).
+  - **Supabase Storage**: create a public bucket `avatars` (profile uploads land there).
+  - `PATCH /api/users/me` (region/plot_type/display_name/avatar_url);
+    `POST /api/users/me/avatar` (image → Storage); `GET/POST/DELETE /api/users/me/saved-articles`
   - `CabinetPage.tsx` at `/cabinet` (nav link «Кабінет»): Налаштування + Збережені статті tabs.
+    Settings top «Профіль» card: avatar picker + Імʼя; «Зберегти зміни» → inline
+    «Ви впевнені?» Так/Ні confirm, server update only on Так.
 - [x] Slice 17 — Knowledge Base (База знань)
   - Migration: `backend/migrations/011_knowledge_base.sql` (kb_categories, kb_articles; article
     `content` is a TipTap doc in JSONB; public read where published).

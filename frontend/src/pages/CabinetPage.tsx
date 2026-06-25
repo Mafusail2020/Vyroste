@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,6 +9,8 @@ interface Profile {
   region_id: string | null
   plot_type: string | null
   is_premium: boolean
+  display_name: string | null
+  avatar_url: string | null
 }
 
 interface Region {
@@ -39,11 +41,61 @@ export default function CabinetPage() {
   const [saved,    setSaved]    = useState<SavedArticle[]>([])
   const [saving,   setSaving]   = useState(false)
 
+  // Profile (avatar + name) editing
+  const [name,        setName]        = useState('')
+  const [avatarFile,  setAvatarFile]  = useState<File | null>(null)
+  const [avatarPrev,  setAvatarPrev]  = useState<string | null>(null)
+  const [confirming,  setConfirming]  = useState(false)
+  const [savingMe,    setSavingMe]    = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
-    api.get<Profile>('/api/users/me').then(r => setProfile(r.data)).catch(() => {})
+    api.get<Profile>('/api/users/me')
+      .then(r => { setProfile(r.data); setName(r.data.display_name ?? '') })
+      .catch(() => {})
     api.get<Region[]>('/api/regions').then(r => setRegions(r.data)).catch(() => {})
     api.get<SavedArticle[]>('/api/users/me/saved-articles').then(r => setSaved(r.data)).catch(() => {})
   }, [])
+
+  function pickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setAvatarFile(f)
+    setAvatarPrev(URL.createObjectURL(f))
+    setConfirming(false)   // a fresh change re-arms the Save button
+    e.target.value = ''     // allow re-picking the same file later
+  }
+
+  const dirty = name !== (profile?.display_name ?? '') || avatarFile !== null
+  const avatarSrc = avatarPrev ?? profile?.avatar_url ?? null
+
+  async function saveProfile() {
+    setSavingMe(true)
+    try {
+      let avatar_url = profile?.avatar_url ?? undefined
+      if (avatarFile) {
+        const fd = new FormData()
+        fd.append('file', avatarFile)
+        const up = await api.post<{ url: string }>('/api/users/me/avatar', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        avatar_url = up.data.url
+      }
+      const patch: Record<string, string> = { display_name: name.trim() }
+      if (avatar_url) patch.avatar_url = avatar_url
+      const r = await api.patch<Profile>('/api/users/me', patch)
+      setProfile(r.data)
+      setName(r.data.display_name ?? '')
+      setAvatarFile(null)
+      setAvatarPrev(null)
+      toast.success('Збережено')
+    } catch {
+      toast.error('Не вдалось зберегти')
+    } finally {
+      setSavingMe(false)
+      setConfirming(false)
+    }
+  }
 
   async function patchProfile(patch: Partial<Pick<Profile, 'region_id' | 'plot_type'>>) {
     setSaving(true)
@@ -92,6 +144,70 @@ export default function CabinetPage() {
       {/* ── Settings ──────────────────────────────────────────────────── */}
       {tab === 'settings' && (
         <div className="space-y-8">
+
+          {/* Profile — avatar + display name */}
+          <section className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="font-black text-xs uppercase tracking-wide text-gray-400 mb-5">Профіль</h2>
+
+            <div className="flex items-center gap-5">
+              {/* Avatar — click opens the file picker */}
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="relative shrink-0 w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 hover:border-forest transition-colors group"
+                title="Змінити аватар"
+              >
+                {avatarSrc
+                  ? <img src={avatarSrc} alt="Аватар" className="w-full h-full object-cover" />
+                  : <span className="w-full h-full flex items-center justify-center bg-gray-100 text-3xl text-gray-400">👤</span>}
+                <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                  Змінити
+                </span>
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" onChange={pickAvatar} className="hidden" />
+
+              {/* Name */}
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm text-gray-500 mb-1.5">Імʼя</label>
+                <input
+                  type="text" value={name} onChange={e => setName(e.target.value)}
+                  placeholder="Ваше імʼя"
+                  className="w-full text-sm px-3 py-2.5 border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:border-forest"
+                />
+              </div>
+            </div>
+
+            {/* Save → confirm */}
+            <div className="mt-5 flex justify-end items-center gap-3 min-h-[40px]">
+              {!confirming ? (
+                <button
+                  onClick={() => setConfirming(true)}
+                  disabled={!dirty || savingMe}
+                  className="px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm hover:bg-forest-dark transition-colors disabled:opacity-40"
+                >
+                  Зберегти зміни
+                </button>
+              ) : (
+                <>
+                  <span className="text-sm font-medium text-gray-600">Ви впевнені?</span>
+                  <button
+                    onClick={saveProfile}
+                    disabled={savingMe}
+                    className="px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm hover:bg-forest-dark transition-colors disabled:opacity-60"
+                  >
+                    {savingMe ? 'Збереження…' : 'Так'}
+                  </button>
+                  <button
+                    onClick={() => setConfirming(false)}
+                    disabled={savingMe}
+                    className="px-5 py-2.5 rounded-xl bg-white border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-gray-300 transition-colors"
+                  >
+                    Ні
+                  </button>
+                </>
+              )}
+            </div>
+          </section>
 
           {/* Account */}
           <section className="bg-white rounded-2xl border border-gray-100 p-6">
