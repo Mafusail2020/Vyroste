@@ -1,7 +1,10 @@
+import threading
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from app.auth import get_current_user
 from app.deps import get_supabase
+from app.email import send_welcome_email
 
 router = APIRouter(prefix="/users")
 
@@ -27,6 +30,10 @@ async def register(body: RegisterRequest):
         sb.table("user_profiles").insert({"id": user.id}).execute()
     except Exception:
         pass
+
+    # Fire-and-forget welcome email — never block or fail registration.
+    if user.email:
+        threading.Thread(target=send_welcome_email, args=(user.email,), daemon=True).start()
 
     return {"id": user.id, "email": user.email}
 
