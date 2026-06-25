@@ -29,19 +29,29 @@ def _aggregate(reviews: list[dict]) -> tuple[int, float]:
     return n, avg
 
 
+def _is_admin(sb, user_id: str) -> bool:
+    p = sb.table("user_profiles").select("is_admin").eq("id", user_id).maybe_single().execute()
+    return bool((p.data or {}).get("is_admin"))
+
+
 @router.get("/nurseries/{nursery_id}/reviews")
 async def list_reviews(nursery_id: str, current_user: dict = Depends(get_current_user)):
-    """Approved reviews for a nursery + the caller's own vote per review."""
+    """Approved reviews for a nursery + the caller's own vote / delete rights."""
     sb = get_supabase()
+    uid = current_user["id"]
+    admin = _is_admin(sb, uid)
     res = (
         sb.table("nursery_reviews")
-        .select("id, author_name, avatar_url, rating, text, likes, dislikes, created_at")
+        .select("id, user_id, author_name, avatar_url, rating, text, likes, dislikes, created_at")
         .eq("nursery_id", nursery_id)
         .eq("status", "approved")
         .order("created_at", desc=True)
         .execute()
     )
     reviews = res.data or []
+    for r in reviews:
+        r["can_delete"] = admin or r.get("user_id") == uid
+        r.pop("user_id", None)   # don't leak author ids
 
     # Caller's votes on these reviews.
     ids = [r["id"] for r in reviews]
@@ -118,6 +128,20 @@ async def vote_review(review_id: str, body: VoteBody, current_user: dict = Depen
     sb.table("nursery_reviews").update({"likes": likes, "dislikes": dislikes}).eq("id", review_id).execute()
 
     return {"likes": likes, "dislikes": dislikes, "my_vote": body.vote}
+
+
+@router.delete("/reviews/{review_id}")
+async def delete_review(review_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a review — allowed for its author or an admin."""
+    sb = get_supabase()
+    uid = current_user["id"]
+    r = sb.table("nursery_reviews").select("user_id").eq("id", review_id).maybe_single().execute()
+    if not r.data:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Review not found")
+    if r.data["user_id"] != uid and not _is_admin(sb, uid):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Not allowed")
+    sb.table("nursery_reviews").delete().eq("id", review_id).execute()  # votes cascade
+    return {"deleted": review_id}
 
 
 # ── Admin moderation ────────────────────────────────────────────────────────

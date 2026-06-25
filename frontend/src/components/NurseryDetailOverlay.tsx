@@ -42,6 +42,7 @@ interface Review {
   dislikes: number
   created_at: string
   my_vote: number
+  can_delete: boolean
 }
 
 /* ─── Mock data (price table + reviews are not in the backend yet) ───────── */
@@ -103,6 +104,7 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
   const [reviews, setReviews] = useState<Review[]>([])
   const [count, setCount] = useState(0)
   const [avg, setAvg] = useState(0)
+  const [confirmDel, setConfirmDel] = useState<string | null>(null)
   const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null)
 
   // Load approved reviews + the caller's profile for the form.
@@ -125,6 +127,18 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
       setReviews(prev => prev.map(x => x.id === reviewId
         ? { ...x, likes: res.data.likes, dislikes: res.data.dislikes, my_vote: res.data.my_vote } : x))
     } catch { /* ignore */ }
+  }
+
+  async function deleteReview(id: string) {
+    try {
+      await api.delete(`/api/reviews/${id}`)
+      const next = reviews.filter(r => r.id !== id)
+      setReviews(next)
+      setCount(next.length)
+      setAvg(next.length ? Math.round((next.reduce((s, r) => s + r.rating, 0) / next.length) * 10) / 10 : 0)
+    } catch { /* ignore */ } finally {
+      setConfirmDel(null)
+    }
   }
 
   function toggleSection(name: string) {
@@ -340,9 +354,21 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
                         <p className="font-bold text-gray-800 text-sm">{r.author_name || 'Користувач'}</p>
                         <p className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString('uk-UA')}</p>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-xs font-bold text-gray-600">{r.rating.toFixed(1)}</span>
-                        <Stars value={r.rating} size="w-3 h-3" />
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-bold text-gray-600">{r.rating.toFixed(1)}</span>
+                          <Stars value={r.rating} size="w-3 h-3" />
+                        </div>
+                        {r.can_delete && (
+                          confirmDel === r.id ? (
+                            <span className="flex items-center gap-2 text-xs">
+                              <button onClick={() => deleteReview(r.id)} className="text-red-500 hover:text-red-600 font-semibold">Так</button>
+                              <button onClick={() => setConfirmDel(null)} className="text-gray-500 hover:text-gray-700">Ні</button>
+                            </span>
+                          ) : (
+                            <button onClick={() => setConfirmDel(r.id)} className="text-xs text-gray-400 hover:text-gray-600">Видалити</button>
+                          )
+                        )}
                       </div>
                     </div>
                     <p className="text-sm text-gray-700 mt-2 leading-relaxed">{r.text}</p>
