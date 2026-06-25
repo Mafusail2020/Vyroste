@@ -131,7 +131,7 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
   const cleanUrl = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#faf9f5] overflow-y-auto">
+    <div className="fixed inset-0 z-[2000] bg-[#faf9f5] overflow-y-auto">
 
       {/* Back button */}
       <div className="sticky top-0 z-10 bg-[#faf9f5]/95 backdrop-blur border-b border-gray-200">
