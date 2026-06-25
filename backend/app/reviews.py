@@ -80,17 +80,18 @@ async def create_review(
     )
     p = prof.data or {}
 
-    sb.table("nursery_reviews").upsert({
+    # Each submission is its own moderated review (multiple per user allowed).
+    sb.table("nursery_reviews").insert({
         "nursery_id":  nursery_id,
         "user_id":     current_user["id"],
         "author_name": p.get("display_name") or "Користувач",
         "avatar_url":  p.get("avatar_url"),
         "rating":      body.rating,
         "text":        body.text.strip(),
-        "status":      "pending",          # re-submitting resets to moderation
+        "status":      "pending",
         "likes":       0,
         "dislikes":    0,
-    }, on_conflict="nursery_id,user_id").execute()
+    }).execute()
     return {"status": "pending"}
 
 
