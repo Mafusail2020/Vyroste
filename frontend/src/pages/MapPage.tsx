@@ -14,13 +14,6 @@ function copyPhone(phone: string) {
   )
 }
 
-// No reviews table yet — derive a stable mock rating (4.5–4.9) from the id.
-function mockRating(id: string): number {
-  let h = 0
-  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  return 4.5 + (h % 5) / 10
-}
-
 const COVER_PLACEHOLDER =
   'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=600&q=60'
 
@@ -68,6 +61,8 @@ interface Nursery {
   videos: string[] | null
   tags: string[] | null
   admin_tags: string[] | null
+  review_count: number
+  avg_rating: number | null
 }
 
 interface Region {
@@ -305,7 +300,6 @@ export default function MapPage() {
             </div>
           ) : filtered.map((n, i) => {
             const active = activeId === n.id
-            const rating = mockRating(n.id)
             const cats = (n.tags ?? []).join(', ')
             const select = () => { setActiveId(n.id); setFlyTarget([n.latitude, n.longitude]) }
             return (
@@ -326,15 +320,20 @@ export default function MapPage() {
                   <p className="text-[11px] uppercase tracking-wide text-gray-400">Розсадник</p>
                   <h3 className="font-bold text-gray-800 text-sm leading-tight">{n.name}</h3>
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-xs font-bold text-gray-700">{rating.toFixed(1)}</span>
-                    <div className="flex">
-                      {[0, 1, 2, 3, 4].map(s => (
-                        <Star key={s} className={`w-3 h-3 ${s < Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`} />
-                      ))}
+                  {/* Rating (real, from approved reviews) */}
+                  {n.review_count > 0 && n.avg_rating != null ? (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs font-bold text-gray-700">{n.avg_rating.toFixed(1)}</span>
+                      <div className="flex">
+                        {[0, 1, 2, 3, 4].map(s => (
+                          <Star key={s} className={`w-3 h-3 ${s < Math.round(n.avg_rating!) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-400">({n.review_count})</span>
                     </div>
-                  </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-1">Без відгуків</p>
+                  )}
 
                   {/* Categories */}
                   {cats && <p className="text-xs text-gray-600 mt-1.5 line-clamp-2">{cats}</p>}

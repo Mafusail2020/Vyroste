@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Star, MapPin, Phone, Globe, ChevronLeft, ChevronRight,
   ChevronDown, ThumbsUp, ThumbsDown, ArrowLeft,
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import api from '../lib/api'
 
 /* ─── lucide has no brand icons in this version → inline SVG socials ──────── */
 function YTIcon() {
@@ -19,6 +20,7 @@ function IGIcon() {
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 interface NurseryLike {
+  id: string
   name: string
   description: string | null
   address: string | null
@@ -28,6 +30,18 @@ interface NurseryLike {
   longitude: number
   photos: string[] | null
   videos: string[] | null
+}
+
+interface Review {
+  id: string
+  author_name: string | null
+  avatar_url: string | null
+  rating: number
+  text: string
+  likes: number
+  dislikes: number
+  created_at: string
+  my_vote: number
 }
 
 /* ─── Mock data (price table + reviews are not in the backend yet) ───────── */
@@ -59,13 +73,6 @@ const PRICE_SECTIONS = [
   { name: 'Ялинки', rows: [{ name: 'Ялина блакитна', age: '3 роки', price: '250 грн' }] },
 ]
 
-const REVIEWS = [
-  { id: 1, name: 'Вася',  date: '01.01.2026', rating: 4, likes: 12, dislikes: 1, text: 'Гарний розсадник, саджанці прийнялися всі. Консультація на висоті, рекомендую усім сусідам.' },
-  { id: 2, name: 'Оля',   date: '15.12.2025', rating: 5, likes: 8,  dislikes: 0, text: 'Замовляла яблуні — приїхали з закритою кореневою системою, упаковано дбайливо. Дуже задоволена.' },
-  { id: 3, name: 'Петро', date: '03.11.2025', rating: 4, likes: 5,  dislikes: 2, text: 'Ціни адекватні, асортимент великий. Доставка Новою поштою без проблем.' },
-  { id: 4, name: 'Ірина', date: '20.10.2025', rating: 4, likes: 3,  dislikes: 0, text: 'Брала сливи та груші. Все прижилось, навесні буде видно врожай. Дякую за поради щодо посадки.' },
-]
-
 /* ─── Star row ───────────────────────────────────────────────────────────── */
 function Stars({ value, size = 'w-4 h-4' }: { value: number; size?: string }) {
   return (
@@ -85,17 +92,37 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
   const { user } = useAuth()
   const photos = nursery.photos?.length ? nursery.photos : PHOTO_FALLBACK
   const videos = nursery.videos ?? []
-  const reviewCount = REVIEWS.length
-  const avgRating = REVIEWS.reduce((s, r) => s + r.rating, 0) / (reviewCount || 1)
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['Яблуні']))
   const [vid, setVid] = useState(0)
   const [form, setForm] = useState({ rating: 0, text: '' })
   const [submitted, setSubmitted] = useState(false)
-  const [votes, setVotes] = useState<Record<number, 'up' | 'down' | undefined>>({})
 
-  function vote(id: number, dir: 'up' | 'down') {
-    setVotes(v => ({ ...v, [id]: v[id] === dir ? undefined : dir }))
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [count, setCount] = useState(0)
+  const [avg, setAvg] = useState(0)
+  const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null)
+
+  // Load approved reviews + the caller's profile for the form.
+  useEffect(() => {
+    api.get<{ count: number; avg: number; reviews: Review[] }>(`/api/nurseries/${nursery.id}/reviews`)
+      .then(r => { setReviews(r.data.reviews); setCount(r.data.count); setAvg(r.data.avg) })
+      .catch(() => {})
+    api.get<{ display_name: string | null; avatar_url: string | null }>('/api/users/me')
+      .then(r => setProfile(r.data)).catch(() => {})
+  }, [nursery.id])
+
+  async function vote(reviewId: string, dir: 'up' | 'down') {
+    const r = reviews.find(x => x.id === reviewId)
+    if (!r) return
+    const want = dir === 'up' ? 1 : -1
+    const next = r.my_vote === want ? 0 : want
+    try {
+      const res = await api.post<{ likes: number; dislikes: number; my_vote: number }>(
+        `/api/reviews/${reviewId}/vote`, { vote: next })
+      setReviews(prev => prev.map(x => x.id === reviewId
+        ? { ...x, likes: res.data.likes, dislikes: res.data.dislikes, my_vote: res.data.my_vote } : x))
+    } catch { /* ignore */ }
   }
 
   function toggleSection(name: string) {
@@ -106,14 +133,17 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
     })
   }
 
-  function submitReview(e: React.FormEvent) {
+  async function submitReview(e: React.FormEvent) {
     e.preventDefault()
-    // Moderation: do NOT add to the list — send for review, clear, confirm.
-    setForm({ rating: 0, text: '' })
-    setSubmitted(true)
+    try {
+      await api.post(`/api/nurseries/${nursery.id}/reviews`, { rating: form.rating || 5, text: form.text })
+      setForm({ rating: 0, text: '' })
+      setSubmitted(true)   // moderation: not shown in the list until approved
+    } catch { /* ignore */ }
   }
 
-  const userName = user?.email?.split('@')[0] ?? ''
+  const userName = profile?.display_name || user?.email?.split('@')[0] || 'Користувач'
+  const userAvatar = profile?.avatar_url || null
 
   /* ── Gallery: layout adapts to image count ── */
   function Gallery() {
@@ -166,9 +196,9 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">{nursery.name}</h1>
 
           <div className="flex items-center gap-2 mt-1.5 mb-4">
-            <span className="text-sm font-bold text-gray-700">{avgRating.toFixed(1).replace('.', ',')}</span>
-            <Stars value={avgRating} />
-            <span className="text-sm text-gray-400">({reviewCount})</span>
+            <span className="text-sm font-bold text-gray-700">{avg.toFixed(1).replace('.', ',')}</span>
+            <Stars value={avg} />
+            <span className="text-sm text-gray-400">({count})</span>
           </div>
 
           {nursery.description && <p className="text-sm text-gray-500 leading-relaxed mb-6">{nursery.description}</p>}
@@ -287,21 +317,26 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
 
       {/* ── Reviews ── */}
       <div className="max-w-7xl mx-auto px-4 pb-16">
-        <h2 className="text-2xl font-black text-gray-800 mb-6">{reviewCount} відгуків про {nursery.name}</h2>
+        <h2 className="text-2xl font-black text-gray-800 mb-6">{count} відгуків про {nursery.name}</h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
 
           {/* Review feed */}
           <div className="space-y-4">
-            {REVIEWS.map(r => (
+            {reviews.length === 0 && (
+              <p className="text-sm text-gray-400 py-8">Поки що немає відгуків. Будьте першим!</p>
+            )}
+            {reviews.map(r => (
               <div key={r.id} className="bg-[#dae5cd] p-4 rounded-sm">
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gray-500 shrink-0" />
+                  {r.avatar_url
+                    ? <img src={r.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                    : <div className="w-12 h-12 rounded-full bg-[#65814f] text-white flex items-center justify-center font-bold uppercase shrink-0">{(r.author_name || '?').charAt(0)}</div>}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-bold text-gray-800 text-sm">{r.name}</p>
-                        <p className="text-xs text-gray-500">{r.date}</p>
+                        <p className="font-bold text-gray-800 text-sm">{r.author_name || 'Користувач'}</p>
+                        <p className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString('uk-UA')}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <span className="text-xs font-bold text-gray-600">{r.rating.toFixed(1)}</span>
@@ -313,17 +348,17 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
                       <span>Чи був відгук корисним</span>
                       <button onClick={() => vote(r.id, 'up')}
                         className={`flex items-center gap-1 px-1.5 h-6 rounded-full transition-colors ${
-                          votes[r.id] === 'up' ? 'bg-[#65814f]' : 'bg-[#a9c08f] hover:bg-[#97b07b]'
+                          r.my_vote === 1 ? 'bg-[#65814f]' : 'bg-[#a9c08f] hover:bg-[#97b07b]'
                         }`}>
                         <ThumbsUp className="w-3 h-3 text-white" />
-                        <span className="text-white font-semibold">{r.likes + (votes[r.id] === 'up' ? 1 : 0)}</span>
+                        <span className="text-white font-semibold">{r.likes}</span>
                       </button>
                       <button onClick={() => vote(r.id, 'down')}
                         className={`flex items-center gap-1 px-1.5 h-6 rounded-full transition-colors ${
-                          votes[r.id] === 'down' ? 'bg-[#9c6b5a]' : 'bg-[#a9c08f] hover:bg-[#97b07b]'
+                          r.my_vote === -1 ? 'bg-[#9c6b5a]' : 'bg-[#a9c08f] hover:bg-[#97b07b]'
                         }`}>
                         <ThumbsDown className="w-3 h-3 text-white" />
-                        <span className="text-white font-semibold">{r.dislikes + (votes[r.id] === 'down' ? 1 : 0)}</span>
+                        <span className="text-white font-semibold">{r.dislikes}</span>
                       </button>
                     </div>
                   </div>
@@ -349,9 +384,9 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
               <form onSubmit={submitReview} className="space-y-3">
                 {/* Review is posted from the logged-in account */}
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-9 h-9 rounded-full bg-[#65814f] text-white flex items-center justify-center text-sm font-bold shrink-0 uppercase">
-                    {userName.charAt(0)}
-                  </div>
+                  {userAvatar
+                    ? <img src={userAvatar} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                    : <div className="w-9 h-9 rounded-full bg-[#65814f] text-white flex items-center justify-center text-sm font-bold shrink-0 uppercase">{userName.charAt(0)}</div>}
                   <span className="text-sm font-semibold text-gray-700 truncate">{userName}</span>
                 </div>
 

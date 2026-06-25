@@ -153,3 +153,13 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
   - Migration `012_kb_category_meta.sql`: kb_categories `description` + `subcategories[]`.
     `/knowledge` landing is a category grid (count badge + description + subtopic links per
     card); selecting a category/search switches to the article-list + sidebar view.
+- [x] Slice 18 — Nursery Reviews (moderated) + helpful votes
+  - Migration: `backend/migrations/015_nursery_reviews.sql` (nursery_reviews + nursery_review_votes,
+    owner/admin RLS; one review per user per nursery; status pending/approved/rejected).
+  - `app/reviews.py`: `GET/POST /api/nurseries/{id}/reviews` (approved + caller's vote; submit →
+    pending, snapshots profile name+avatar), `POST /api/reviews/{id}/vote` (recomputes likes),
+    admin `GET /api/admin/reviews` + `PATCH /api/admin/reviews/{id}` (approve/reject).
+  - `/api/nurseries` list now includes `review_count` + `avg_rating` (approved). MapPage cards +
+    `NurseryDetailOverlay` show real rating/count; overlay form posts from the account
+    (avatar + display_name), votes hit the API. Admin moderation UI still TODO (approve via
+    `/api/admin/reviews` or SQL for now).

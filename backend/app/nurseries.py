@@ -30,6 +30,27 @@ def _own_nursery(sb, nursery_id: str, user_id: str) -> dict:
     return res.data
 
 
+def _attach_review_stats(sb, nurseries: list[dict]) -> list[dict]:
+    """Add review_count + avg_rating (approved reviews) to each nursery."""
+    ids = [n["id"] for n in nurseries]
+    sums: dict[str, list[int]] = {}
+    if ids:
+        revs = (
+            sb.table("nursery_reviews")
+            .select("nursery_id, rating")
+            .in_("nursery_id", ids)
+            .eq("status", "approved")
+            .execute()
+        )
+        for r in (revs.data or []):
+            sums.setdefault(r["nursery_id"], []).append(r["rating"])
+    for n in nurseries:
+        ratings = sums.get(n["id"], [])
+        n["review_count"] = len(ratings)
+        n["avg_rating"] = round(sum(ratings) / len(ratings), 1) if ratings else None
+    return nurseries
+
+
 @router.get("")
 async def list_nurseries(
     region_id: str | None = Query(default=None),
@@ -45,7 +66,7 @@ async def list_nurseries(
     if tag:
         q = q.contains("tags", [tag])
     result = q.order("name").execute()
-    return result.data
+    return _attach_review_stats(sb, result.data or [])
 
 
 @router.get("/{nursery_id}")

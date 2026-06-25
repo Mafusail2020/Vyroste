@@ -10,6 +10,7 @@ from app.gdd import router as gdd_router
 from app.payments import router as payments_router
 from app.blog import router as blog_router
 from app.knowledge import router as knowledge_router
+from app.reviews import router as reviews_router
 
 router = APIRouter()
 router.include_router(users_router)
@@ -22,6 +23,7 @@ router.include_router(gdd_router)
 router.include_router(payments_router)
 router.include_router(blog_router)
 router.include_router(knowledge_router)
+router.include_router(reviews_router)
 
 
 @router.get("/health")
