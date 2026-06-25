@@ -398,7 +398,7 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
                     const onAt = s <= form.rating
                     return (
                       <button key={s} type="button" onClick={() => setForm(f => ({ ...f, rating: s }))}
-                        className="flex-1 flex flex-col items-center gap-1">
+                        className="flex-1 min-w-0 flex flex-col items-center gap-1">
                         <Star
                           className={`w-full h-auto ${onAt ? 'text-amber-400 fill-amber-400' : 'text-gray-400'}`}
                           strokeLinejoin="miter" strokeWidth={1.25}
