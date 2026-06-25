@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import { getMonthMoonDays, type MoonDay } from '../lib/moonPhase'
+import CarePopover from '../components/CarePopover'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -68,6 +69,7 @@ const TASK_GAP = 2    // px gap between bars
 const TOP_PAD  = 4    // px top padding in row
 const MOON_H   = 16   // px moon strip height
 const WD_H     = 11   // px weekday-initial band at top of each cell (keep bars/moon below it)
+const CLICK_PX = 5    // px movement below which a press counts as a click, not a drag
 
 const MONTHS_SHORT = ['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру']
 
@@ -219,8 +221,9 @@ export default function CalendarPage() {
   const [cropColorMap] = useState<Record<string, string>>(() => {
     try { return JSON.parse(localStorage.getItem('cropColors') || '{}') } catch { return {} }
   })
+  const [carePopover, setCarePopover] = useState<{ x: number; y: number } | null>(null)
 
-  const dragRef     = useRef<{ id: string; startX: number; base: number } | null>(null)
+  const dragRef     = useRef<{ id: string; startX: number; startY: number; base: number; type: TaskType } | null>(null)
   const liveRef     = useRef<{ id: string; delta: number } | null>(null)
   const scrollRef   = useRef<HTMLDivElement>(null)
   const todayRowRef = useRef<HTMLDivElement>(null)
@@ -363,9 +366,14 @@ export default function CalendarPage() {
       liveRef.current = v
       setLiveOff(v)
     }
-    const onUp = () => {
-      if (!dragRef.current) return
-      if (liveRef.current) {
+    const onUp = (e: MouseEvent) => {
+      const d = dragRef.current
+      if (!d) return
+      const movedPx = Math.abs(e.clientX - d.startX) + Math.abs(e.clientY - d.startY)
+      if (movedPx < CLICK_PX) {
+        // A click, not a drag — open care details for «Догляд» (cultivating) bars.
+        if (d.type === 'cultivating') setCarePopover({ x: e.clientX, y: e.clientY })
+      } else if (liveRef.current) {
         const { id, delta } = liveRef.current
         setCropOffsets(p => {
           const next = { ...p, [id]: delta }
@@ -382,10 +390,10 @@ export default function CalendarPage() {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
   }, [])
 
-  function startDrag(e: React.MouseEvent, cropId: string) {
+  function startDrag(e: React.MouseEvent, cropId: string, taskType: TaskType) {
     e.preventDefault()
     const base = liveOff?.id === cropId ? liveOff.delta : (cropOffsets[cropId] ?? 0)
-    dragRef.current = { id: cropId, startX: e.clientX, base }
+    dragRef.current = { id: cropId, startX: e.clientX, startY: e.clientY, base, type: taskType }
     if (showDragHint) { setShowDragHint(false); localStorage.setItem('calDragHintSeen', '1') }
   }
 
@@ -749,7 +757,7 @@ export default function CalendarPage() {
 
                       return (
                         <div key={seg.task.id + '-' + month}
-                          onMouseDown={e => startDrag(e, seg.cropId)}
+                          onMouseDown={e => startDrag(e, seg.cropId, seg.task.type)}
                           onMouseEnter={() => setHoveredCrop(seg.cropId)}
                           onMouseLeave={() => setHoveredCrop(null)}
                           title={`${seg.cropName}: ${cfg.label}\n${seg.task.start.toLocaleDateString('uk-UA')} – ${seg.task.end.toLocaleDateString('uk-UA')}${ripe ? `\nГотовність до збору: ${ripe}%` : ''}${lunarMatch ? `\n${midMoon?.icon} Сприятливий місячний день` : ''}`}
@@ -943,6 +951,11 @@ export default function CalendarPage() {
           </div>
         </div>
       </aside>
+
+      {/* Care details popover — opens on a «Догляд» bar click (not drag) */}
+      {carePopover && (
+        <CarePopover x={carePopover.x} y={carePopover.y} onClose={() => setCarePopover(null)} />
+      )}
     </div>
   )
 }

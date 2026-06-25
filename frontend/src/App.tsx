@@ -23,6 +23,7 @@ import CabinetPage from './pages/CabinetPage'
 import AdminKnowledgePage from './pages/AdminKnowledgePage'
 import KnowledgePage from './pages/KnowledgePage'
 import ArticlePage from './pages/ArticlePage'
+import CarePopoverDemo from './pages/CarePopoverDemo'
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/blog/:id" element={<BlogPostPage />} />
           <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/knowledge/:slug" element={<ArticlePage />} />
+          <Route path="/care-popover-demo" element={<CarePopoverDemo />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
