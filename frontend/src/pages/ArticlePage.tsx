@@ -149,7 +149,7 @@ export default function ArticlePage() {
 
         {/* ── Sidebar ── */}
         <aside className="space-y-8">
-          <div className="sticky top-20 space-y-8">
+          <div className="sticky top-24 space-y-8">
             <ArticleToc items={toc} />
             <KbSidebar categories={categories} activeSlug={activeCat?.slug} />
           </div>

@@ -71,8 +71,10 @@ body {
    wipe that plays once and stays. `--rot` is the resting rotation (kept static,
    so it doesn't fight the clip-path animation). */
 @keyframes doodleDraw {
-  from { clip-path: inset(0 100% 0 0); opacity: 0; }
-  to   { clip-path: inset(0 0 0 0);    opacity: 1; }
+  /* -6px bleed on top/bottom/left so the white outline isn't clipped; the
+     right edge wipes 100% → -6px to reveal left→right. */
+  from { clip-path: inset(-6px 100% -6px -6px); opacity: 0; }
+  to   { clip-path: inset(-6px -6px -6px -6px); opacity: 1; }
 }
 .doodle-draw {
   transform: rotate(var(--rot, 0deg));

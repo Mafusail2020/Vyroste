@@ -57,7 +57,7 @@ export default function KbSidebar({
   }
 
   return (
-    <div className="space-y-10 sticky top-20">
+    <div className="space-y-10 sticky top-24">
 
       {/* ── Search: rectangular input + appended icon button ── */}
       <form onSubmit={submit} className="flex items-stretch border border-gray-300 rounded-md overflow-hidden bg-white">

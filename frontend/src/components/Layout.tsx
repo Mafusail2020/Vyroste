@@ -18,9 +18,9 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col bg-cream">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <NavLink to="/">
-            <Logo height={48} />
+            <Logo height={72} />
           </NavLink>
 
           <nav className="hidden md:flex items-center gap-6">
