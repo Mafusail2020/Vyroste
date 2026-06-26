@@ -125,7 +125,7 @@ function Hero() {
           <div className="flex flex-wrap gap-3" style={fadeUp(440)}>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 bg-forest text-white font-bold text-sm px-7 py-3.5 rounded-lg hover:bg-forest-dark transition-all duration-300 hover:scale-[1.03] shadow-lg"
+              className="inline-flex items-center gap-2 bg-forest text-white font-bold text-base px-7 py-3.5 rounded-lg hover:bg-forest-dark transition-all duration-300 hover:scale-[1.03] shadow-lg"
               style={{ boxShadow: '0 8px 24px rgba(43,97,23,0.25)' }}
             >
               Зареєструватись безкоштовно
@@ -133,7 +133,7 @@ function Hero() {
             </Link>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold text-sm px-6 py-3.5 rounded-lg border border-gray-200 hover:border-forest hover:text-forest transition-all duration-300"
+              className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold text-base px-6 py-3.5 rounded-lg border border-gray-200 hover:border-forest hover:text-forest transition-all duration-300"
             >
               Дізнатись про Преміум
               <ChevronRight className="w-4 h-4 opacity-50" />
