@@ -85,3 +85,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .doodle-draw { animation: none; clip-path: none; opacity: 1; }
 }
+/* White outline tracing a (transparent) doodle's shape. */
+.doodle-outline {
+  filter:
+    drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff)
+    drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff);
+}

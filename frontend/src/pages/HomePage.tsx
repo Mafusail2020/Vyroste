@@ -144,8 +144,8 @@ function Hero() {
         {/* Right: hero visual */}
         <div className="relative" style={fadeSlide(180, 32, 0, 0.96)}>
           {/* hand-drawn arrow from the text toward the photo */}
-          <span className="hidden md:block absolute left-0 top-12 -ml-16 z-30 pointer-events-none select-none">
-            <img src={arrowArc} alt="" aria-hidden="true" className="doodle-draw w-32 opacity-90"
+          <span className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 -ml-10 z-30 pointer-events-none select-none">
+            <img src={arrowArc} alt="" aria-hidden="true" className="doodle-draw doodle-outline w-32 opacity-90"
               style={{ '--rot': '0deg' } as React.CSSProperties} />
           </span>
           <div className="rounded-3xl w-full aspect-[4/3] relative overflow-hidden shadow-2xl bg-card-green">
@@ -457,7 +457,7 @@ function FeatureDetails() {
         imageSrc={calendarPhoto}
         decor={
           <span className="hidden lg:block absolute top-[45%] left-0 -ml-20 z-20 pointer-events-none select-none">
-            <img src={arrowCurveDown} alt="" aria-hidden="true" className="doodle-draw w-28"
+            <img src={arrowCurveDown} alt="" aria-hidden="true" className="doodle-draw doodle-outline w-28"
               style={{ '--rot': '0deg' } as React.CSSProperties} />
           </span>
         }
