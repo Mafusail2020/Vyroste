@@ -11,5 +11,5 @@ interface LogoProps {
 // has no effect now (the subtitle is baked into the image).
 export default function Logo({ size = 'md', height }: LogoProps) {
   const h = height ?? (size === 'sm' ? 90 : size === 'lg' ? 168 : 126)
-  return <img src={logo} alt="Виросте — Сад та город без помилок" style={{ height: h }} className="w-auto select-none" />
+  return <img src={logo} alt="Виросте — Сад та город без помилок" style={{ height: h }} className="w-auto max-w-none select-none" />
 }
