@@ -6,28 +6,19 @@ import {
   ArrowRight, Sparkles, Check, ChevronRight,
 } from 'lucide-react'
 
-// ─── Social SVGs ──────────────────────────────────────────────────────────────
-function YTIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-red-600" aria-hidden="true">
-      <path d="M23 7s-.3-2-1.2-2.8c-1.1-1.2-2.4-1.2-3-1.3C16.1 2.8 12 2.8 12 2.8s-4.1 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.2.7 11.4v2c0 2.2.3 4.4.3 4.4s.3 2 1.2 2.8c1.1 1.2 2.6 1.1 3.3 1.2C7.5 22 12 22 12 22s4.1 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.8 1.2-2.8 1.2-2.8s.3-2.2.3-4.4v-2C23.3 9.2 23 7 23 7zm-13.5 9V8l8 4-8 4z" />
-    </svg>
-  )
-}
-function FBIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-blue-700" aria-hidden="true">
-      <path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.27h3.32l-.53 3.49h-2.79V24C19.61 23.1 24 18.1 24 12.07z" />
-    </svg>
-  )
-}
-function IGIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-pink-600" aria-hidden="true">
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-    </svg>
-  )
-}
+// ─── Image assets ──────────────────────────────────────────────────────────────
+import heroPhoto from '../assets/KnowledgeBase/main_kb_photo.jpg'
+import calendarPhoto from '../assets/HomePage/calendar_photo.png'
+import mapPhoto from '../assets/HomePage/map_photo.jpeg'
+import kbPhoto from '../assets/HomePage/kb_photo.jpg'
+import arrowArc from '../assets/arrow_with_arc.png'
+import arrowCurveDown from '../assets/arrow_curve_down.png'
+import markerL from '../assets/place_marker_l.png'
+import markerR from '../assets/place_marker_r.png'
+import questionMark from '../assets/question_mark.png'
+import ytGreen from '../assets/yt_green.png'
+import fbGreen from '../assets/facebook_green.png'
+import igGreen from '../assets/inst_green.png'
 
 // ─── Animation Primitives ─────────────────────────────────────────────────────
 function useInView(threshold = 0.12) {
@@ -119,7 +110,7 @@ function Hero() {
           >
             ВПЕВНЕНО<br />
             ВИРОЩУЙ<br />
-            СВОЄ.
+            СВОЄ
           </h1>
 
           <p
@@ -152,16 +143,11 @@ function Hero() {
 
         {/* Right: hero visual */}
         <div className="relative" style={fadeSlide(180, 32, 0, 0.96)}>
-          <div
-            className="rounded-3xl w-full aspect-[4/3] relative overflow-hidden shadow-2xl"
-            style={{ background: 'linear-gradient(140deg, #BBE3BB 0%, #C2E3F5 55%, #D8C8F0 100%)' }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center text-[140px] select-none opacity-15 rotate-[-12deg]">
-              🌿
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center text-[80px] select-none">
-              🧑‍🌾
-            </div>
+          {/* hand-drawn arrow from the text toward the photo */}
+          <img src={arrowArc} alt="" aria-hidden="true"
+            className="hidden md:block absolute -left-28 bottom-8 w-32 pointer-events-none select-none -scale-x-100 opacity-80" />
+          <div className="rounded-3xl w-full aspect-[4/3] relative overflow-hidden shadow-2xl bg-card-green">
+            <img src={heroPhoto} alt="Садівниця у саду" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
           </div>
 
@@ -323,6 +309,8 @@ interface DetailSectionProps {
   imageSide: 'left' | 'right'
   imageBg: string
   imageEmoji: string
+  imageSrc?: string
+  decor?: React.ReactNode
   sectionBg: string
   btnBg: string
   btnShadow: string
@@ -330,7 +318,7 @@ interface DetailSectionProps {
 }
 
 function DetailSection({
-  tag, title, desc, to, ctaLabel, imageSide, imageBg, imageEmoji,
+  tag, title, desc, to, ctaLabel, imageSide, imageBg, imageEmoji, imageSrc, decor,
   sectionBg, btnBg, btnShadow, splitWhite = false,
 }: DetailSectionProps) {
   // Scroll animations: text from left/right, image from opposite side
@@ -393,7 +381,9 @@ function DetailSection({
       className="rounded-3xl overflow-hidden w-full h-full relative shadow-xl flex items-center justify-center min-h-[380px]"
       style={{ background: imageBg }}
     >
-      <span className="text-[130px] select-none drop-shadow-md">{imageEmoji}</span>
+      {imageSrc
+        ? <img src={imageSrc} alt={title} className="w-full h-full object-cover" />
+        : <span className="text-[130px] select-none drop-shadow-md">{imageEmoji}</span>}
       <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
     </div>
   )
@@ -426,6 +416,7 @@ function DetailSection({
       }}
     >
       {imageContent}
+      {decor}
     </div>
   )
 
@@ -461,6 +452,11 @@ function FeatureDetails() {
         imageSide="right"
         imageBg="linear-gradient(135deg, #9EC9E8 0%, #C2E3F5 100%)"
         imageEmoji="📅"
+        imageSrc={calendarPhoto}
+        decor={
+          <img src={arrowCurveDown} alt="" aria-hidden="true"
+            className="hidden lg:block absolute top-1/2 -translate-y-1/2 left-0 -translate-x-2/3 w-28 pointer-events-none select-none z-20" />
+        }
         sectionBg="#C2E3F5"
         btnBg="#1A237E"
         btnShadow="0 6px 20px rgba(26,35,126,0.3)"
@@ -475,6 +471,13 @@ function FeatureDetails() {
         imageSide="left"
         imageBg="linear-gradient(135deg, #8ED08E 0%, #BBE3BB 100%)"
         imageEmoji="🗺️"
+        imageSrc={mapPhoto}
+        decor={<>
+          <img src={markerL} alt="" aria-hidden="true"
+            className="absolute -top-5 left-6 w-12 sm:w-16 pointer-events-none select-none z-20 drop-shadow" />
+          <img src={markerR} alt="" aria-hidden="true"
+            className="absolute -bottom-6 right-2 w-12 sm:w-16 pointer-events-none select-none z-20 drop-shadow" />
+        </>}
         sectionBg="#FFFFFF"
         btnBg="#2B6117"
         btnShadow="0 6px 20px rgba(43,97,23,0.3)"
@@ -489,6 +492,13 @@ function FeatureDetails() {
         imageSide="right"
         imageBg="linear-gradient(135deg, #B8A8E0 0%, #D8C8F0 100%)"
         imageEmoji="🥦"
+        imageSrc={kbPhoto}
+        decor={<>
+          <img src={questionMark} alt="" aria-hidden="true"
+            className="absolute -top-6 left-6 w-8 sm:w-10 rotate-[-12deg] pointer-events-none select-none z-20" />
+          <img src={questionMark} alt="" aria-hidden="true"
+            className="absolute -bottom-7 right-12 w-9 sm:w-12 rotate-12 pointer-events-none select-none z-20" />
+        </>}
         sectionBg="#D8C8F0"
         btnBg="#6D28D9"
         btnShadow="0 6px 20px rgba(109,40,217,0.3)"
@@ -595,18 +605,18 @@ function Footer() {
             <Logo size="md" showSubtitle={true} />
             <div className="mt-5 mb-4 w-28 h-px bg-gray-300" />
             <p className="text-gray-400 text-xs mb-4 uppercase tracking-wider font-semibold">Ми в соц мережах</p>
-            <div className="flex gap-2.5">
+            <div className="flex gap-3">
               <a href="https://youtube.com/@vyroste" target="_blank" rel="noreferrer" aria-label="YouTube"
-                className="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 hover:scale-110 transition-all duration-200">
-                <YTIcon />
+                className="hover:scale-110 transition-transform duration-200">
+                <img src={ytGreen} alt="YouTube" className="w-9 h-9" />
               </a>
               <a href="https://facebook.com/vyroste" target="_blank" rel="noreferrer" aria-label="Facebook"
-                className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center hover:bg-blue-100 hover:scale-110 transition-all duration-200">
-                <FBIcon />
+                className="hover:scale-110 transition-transform duration-200">
+                <img src={fbGreen} alt="Facebook" className="w-9 h-9" />
               </a>
               <a href="https://instagram.com/vyroste" target="_blank" rel="noreferrer" aria-label="Instagram"
-                className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center hover:bg-pink-100 hover:scale-110 transition-all duration-200">
-                <IGIcon />
+                className="hover:scale-110 transition-transform duration-200">
+                <img src={igGreen} alt="Instagram" className="w-9 h-9" />
               </a>
             </div>
           </div>
