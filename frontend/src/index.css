@@ -67,16 +67,21 @@ body {
   pointer-events: none;
 }
 
-/* Ambient float + wobble for decorative doodles (arrows, question marks).
-   `--rot` is the element's resting rotation; the keyframe bobs + wobbles around it. */
-@keyframes doodleFloat {
-  0%, 100% { transform: translateY(0)     rotate(calc(var(--rot, 0deg) - 3deg)); }
-  50%      { transform: translateY(-10px) rotate(calc(var(--rot, 0deg) + 3deg)); }
+/* Draw-on reveal for decorative doodles (arrows, question marks): a left→right
+   wipe that plays once and stays. `--rot` is the resting rotation (kept static,
+   so it doesn't fight the clip-path animation). */
+@keyframes doodleDraw {
+  from { clip-path: inset(0 100% 0 0); opacity: 0; }
+  to   { clip-path: inset(0 0 0 0);    opacity: 1; }
 }
-.doodle {
-  animation: doodleFloat 4s ease-in-out infinite;
-  will-change: transform;
+.doodle-draw {
+  transform: rotate(var(--rot, 0deg));
+  animation: doodleDraw 0.9s ease-out both;
+  will-change: clip-path;
 }
+/* Below-the-fold doodles wait inside a host until it scrolls into view. */
+.doodle-host .doodle-draw { animation-play-state: paused; }
+.doodle-host.in .doodle-draw { animation-play-state: running; }
 @media (prefers-reduced-motion: reduce) {
-  .doodle { animation: none; }
+  .doodle-draw { animation: none; clip-path: none; opacity: 1; }
 }

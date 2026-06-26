@@ -446,7 +446,7 @@ export default function CalendarPage() {
 
   /* ── Render ───────────────────────────────────────────────────────────── */
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden select-none bg-white">
+    <div className="flex h-[calc(100vh-5rem)] overflow-hidden select-none bg-white">
 
       {/* ── Sidebar ───────────────────────────────────────────────────── */}
       <aside className={`flex-none bg-white border-r border-gray-200 flex flex-col transition-all duration-200 overflow-hidden ${sidebarOpen ? 'w-52' : 'w-12'}`}>

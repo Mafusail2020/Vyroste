@@ -22,7 +22,7 @@ export default function CarePopoverDemo() {
   ]
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-cream overflow-hidden">
+    <div className="relative min-h-[calc(100vh-5rem)] bg-cream overflow-hidden">
       <div className="px-6 py-8">
         <h1 className="text-2xl font-black text-forest uppercase">Деталі догляду — демо</h1>
         <p className="text-sm text-gray-500 mt-1">Клікни будь-який блок «Догляд» — поповер відкриється над курсором.</p>

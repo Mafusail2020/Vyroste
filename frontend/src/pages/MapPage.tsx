@@ -205,7 +205,7 @@ export default function MapPage() {
   }
 
   if (loading) return (
-    <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
+    <div className="flex" style={{ height: 'calc(100vh - 5rem)' }}>
       <aside className="w-80 shrink-0 flex flex-col bg-white border-r border-gray-200 p-4 gap-3">
         <div className="animate-pulse bg-gray-200 rounded-lg h-8 w-3/4" />
         <div className="animate-pulse bg-gray-200 rounded-lg h-10 w-full" />
@@ -218,7 +218,7 @@ export default function MapPage() {
   )
 
   return (
-    <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
+    <div className="flex" style={{ height: 'calc(100vh - 5rem)' }}>
       <style>{MAP_KEYFRAMES}</style>
 
       {/* ── Sidebar ───────────────────────────────────────────────────── */}
