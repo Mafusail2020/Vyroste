@@ -145,7 +145,7 @@ function Hero() {
         <div className="relative" style={fadeSlide(180, 32, 0, 0.96)}>
           {/* hand-drawn arrow from the text toward the photo */}
           <img src={arrowArc} alt="" aria-hidden="true"
-            className="hidden md:block absolute -left-28 bottom-8 w-32 pointer-events-none select-none -scale-x-100 opacity-80" />
+            className="hidden md:block absolute left-0 -translate-x-1/2 top-12 w-32 pointer-events-none select-none z-30 opacity-90" />
           <div className="rounded-3xl w-full aspect-[4/3] relative overflow-hidden shadow-2xl bg-card-green">
             <img src={heroPhoto} alt="Садівниця у саду" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
@@ -495,9 +495,9 @@ function FeatureDetails() {
         imageSrc={kbPhoto}
         decor={<>
           <img src={questionMark} alt="" aria-hidden="true"
-            className="absolute -top-6 left-6 w-8 sm:w-10 rotate-[-12deg] pointer-events-none select-none z-20" />
+            className="absolute -top-9 left-8 w-14 sm:w-20 rotate-[-12deg] pointer-events-none select-none z-30 drop-shadow-md" />
           <img src={questionMark} alt="" aria-hidden="true"
-            className="absolute -bottom-7 right-12 w-9 sm:w-12 rotate-12 pointer-events-none select-none z-20" />
+            className="absolute -bottom-10 right-16 w-16 sm:w-24 rotate-12 pointer-events-none select-none z-30 drop-shadow-md" />
         </>}
         sectionBg="#D8C8F0"
         btnBg="#6D28D9"
