@@ -125,7 +125,7 @@ function Hero() {
           <div className="flex flex-wrap gap-3" style={fadeUp(440)}>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 bg-forest text-white font-bold text-sm px-7 py-3.5 rounded-full hover:bg-forest-dark transition-all duration-300 hover:scale-[1.03] shadow-lg"
+              className="inline-flex items-center gap-2 bg-forest text-white font-bold text-sm px-7 py-3.5 rounded-lg hover:bg-forest-dark transition-all duration-300 hover:scale-[1.03] shadow-lg"
               style={{ boxShadow: '0 8px 24px rgba(43,97,23,0.25)' }}
             >
               Зареєструватись безкоштовно
@@ -133,7 +133,7 @@ function Hero() {
             </Link>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold text-sm px-6 py-3.5 rounded-full border border-gray-200 hover:border-forest hover:text-forest transition-all duration-300"
+              className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold text-sm px-6 py-3.5 rounded-lg border border-gray-200 hover:border-forest hover:text-forest transition-all duration-300"
             >
               Дізнатись про Преміум
               <ChevronRight className="w-4 h-4 opacity-50" />
@@ -285,7 +285,7 @@ function FeatureCards() {
                   <p className="text-gray-500 text-sm leading-relaxed mb-6">{card.desc}</p>
                   <Link
                     to={card.to}
-                    className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl self-start transition-all duration-200 hover:scale-[1.03] hover:brightness-95"
+                    className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-lg self-start transition-all duration-200 hover:scale-[1.03] hover:brightness-95"
                     style={{ background: card.gradientTo, color: card.iconColor }}
                   >
                     {card.cta}
@@ -369,7 +369,7 @@ function DetailSection({
       <p className="text-gray-500 text-base leading-relaxed mb-7 max-w-[400px]">{desc}</p>
       <Link
         to={to}
-        className="inline-flex items-center gap-2 text-white text-sm font-bold px-6 py-3 rounded-full transition-all duration-300 hover:scale-[1.03] hover:brightness-90 self-start shadow-md"
+        className="inline-flex items-center gap-2 text-white text-sm font-bold px-6 py-3 rounded-lg transition-all duration-300 hover:scale-[1.03] hover:brightness-90 self-start shadow-md"
         style={{ background: btnBg, boxShadow: btnShadow }}
       >
         {ctaLabel}
@@ -562,7 +562,7 @@ function Pricing() {
             </ul>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 bg-white text-forest font-black text-sm px-8 py-4 rounded-full hover:bg-cream transition-all duration-300 hover:scale-[1.04] shadow-2xl"
+              className="inline-flex items-center gap-2 bg-white text-forest font-black text-sm px-8 py-4 rounded-lg hover:bg-cream transition-all duration-300 hover:scale-[1.04] shadow-2xl"
             >
               Переглянути тарифи
               <ArrowRight className="w-4 h-4" />
