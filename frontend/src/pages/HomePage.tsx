@@ -144,8 +144,10 @@ function Hero() {
         {/* Right: hero visual */}
         <div className="relative" style={fadeSlide(180, 32, 0, 0.96)}>
           {/* hand-drawn arrow from the text toward the photo */}
-          <img src={arrowArc} alt="" aria-hidden="true"
-            className="hidden md:block absolute left-0 -translate-x-1/2 top-12 w-32 pointer-events-none select-none z-30 opacity-90" />
+          <span className="hidden md:block absolute left-0 top-12 -ml-16 z-30 pointer-events-none select-none">
+            <img src={arrowArc} alt="" aria-hidden="true" className="doodle w-32 opacity-90"
+              style={{ '--rot': '0deg' } as React.CSSProperties} />
+          </span>
           <div className="rounded-3xl w-full aspect-[4/3] relative overflow-hidden shadow-2xl bg-card-green">
             <img src={heroPhoto} alt="Садівниця у саду" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
@@ -454,8 +456,10 @@ function FeatureDetails() {
         imageEmoji="📅"
         imageSrc={calendarPhoto}
         decor={
-          <img src={arrowCurveDown} alt="" aria-hidden="true"
-            className="hidden lg:block absolute top-1/2 -translate-y-1/2 left-0 -translate-x-2/3 w-28 pointer-events-none select-none z-20" />
+          <span className="hidden lg:block absolute top-[45%] left-0 -ml-20 z-20 pointer-events-none select-none">
+            <img src={arrowCurveDown} alt="" aria-hidden="true" className="doodle w-28"
+              style={{ '--rot': '0deg' } as React.CSSProperties} />
+          </span>
         }
         sectionBg="#C2E3F5"
         btnBg="#1A237E"
@@ -494,10 +498,14 @@ function FeatureDetails() {
         imageEmoji="🥦"
         imageSrc={kbPhoto}
         decor={<>
-          <img src={questionMark} alt="" aria-hidden="true"
-            className="absolute -top-9 left-8 w-14 sm:w-20 rotate-[-12deg] pointer-events-none select-none z-30 drop-shadow-md" />
-          <img src={questionMark} alt="" aria-hidden="true"
-            className="absolute -bottom-10 right-16 w-16 sm:w-24 rotate-12 pointer-events-none select-none z-30 drop-shadow-md" />
+          <span className="absolute -top-9 left-8 z-30 pointer-events-none select-none">
+            <img src={questionMark} alt="" aria-hidden="true" className="doodle w-14 sm:w-20 drop-shadow-md"
+              style={{ '--rot': '-12deg' } as React.CSSProperties} />
+          </span>
+          <span className="absolute -bottom-10 right-16 z-30 pointer-events-none select-none">
+            <img src={questionMark} alt="" aria-hidden="true" className="doodle w-16 sm:w-24 drop-shadow-md"
+              style={{ '--rot': '12deg', animationDelay: '1.3s' } as React.CSSProperties} />
+          </span>
         </>}
         sectionBg="#D8C8F0"
         btnBg="#6D28D9"

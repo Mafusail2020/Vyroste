@@ -66,3 +66,17 @@ body {
   height: 0;
   pointer-events: none;
 }
+
+/* Ambient float + wobble for decorative doodles (arrows, question marks).
+   `--rot` is the element's resting rotation; the keyframe bobs + wobbles around it. */
+@keyframes doodleFloat {
+  0%, 100% { transform: translateY(0)     rotate(calc(var(--rot, 0deg) - 3deg)); }
+  50%      { transform: translateY(-10px) rotate(calc(var(--rot, 0deg) + 3deg)); }
+}
+.doodle {
+  animation: doodleFloat 4s ease-in-out infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .doodle { animation: none; }
+}
