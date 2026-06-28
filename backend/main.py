@@ -23,9 +23,17 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Виросте API", version="0.1.0", lifespan=lifespan)
 
+# FRONTEND_ORIGIN may be a comma-separated list; tolerate trailing slashes.
+_allowed_origins = [
+    o.strip().rstrip("/")
+    for o in settings.frontend_origin.split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Vercel preview/prod deploys
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
