@@ -67,21 +67,32 @@ export default function KnowledgePage() {
     if (cards.length === 0) return
     dealtRef.current = true
 
-    const baseL = cards[0].offsetLeft
-    const baseT = cards[0].offsetTop
-    cards.forEach((card, i) => {
-      const dx = baseL - card.offsetLeft
-      const dy = baseT - card.offsetTop
-      card.style.transition = 'none'
-      card.style.transform = `translate(${dx}px, ${dy}px)`
-      card.style.zIndex = String(cards.length - i)   // card 0 on top → rest slide out from under
+    // Group cards by grid row (shared offsetTop); each row deals from its own
+    // first card. Cards start stacked on that row's first card, behind it.
+    const rows = new Map<number, HTMLElement[]>()
+    cards.forEach(card => {
+      const top = card.offsetTop
+      if (!rows.has(top)) rows.set(top, [])
+      rows.get(top)!.push(card)
+    })
+
+    rows.forEach(rowCards => {
+      rowCards.sort((a, b) => a.offsetLeft - b.offsetLeft)
+      const baseL = rowCards[0].offsetLeft
+      rowCards.forEach((card, j) => {
+        card.style.transition = 'none'
+        card.style.transform = `translate(${baseL - card.offsetLeft}px, 0)`
+        card.style.zIndex = String(rowCards.length - j)   // first card on top → rest slide out from under
+      })
     })
     void grid.offsetHeight   // flush the stacked start state
 
     requestAnimationFrame(() => {
-      cards.forEach((card, i) => {
-        card.style.transition = `transform 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 130}ms, box-shadow 0.3s ease`
-        card.style.transform = 'translate(0, 0)'
+      rows.forEach(rowCards => {
+        rowCards.forEach((card, j) => {
+          card.style.transition = `transform 1s cubic-bezier(0.16,1,0.3,1) ${j * 130}ms, box-shadow 0.3s ease`
+          card.style.transform = 'translate(0, 0)'
+        })
       })
     })
   }, [categories, isLanding])
