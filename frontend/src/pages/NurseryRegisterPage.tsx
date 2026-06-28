@@ -283,7 +283,7 @@ export default function NurseryRegisterPage() {
           {geoMsg && <p className={`mt-2 text-xs ${geoMsg.startsWith('✓') ? 'text-forest' : 'text-amber-600'}`}>{geoMsg}</p>}
 
           <p className="mt-3 mb-1.5 text-xs text-gray-400">📍 Натисніть на карту або перетягніть маркер, щоб уточнити місце</p>
-          <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: 280 }}>
+          <div className="relative z-0 rounded-xl overflow-hidden border border-gray-200" style={{ height: 280 }}>
             <MapContainer center={UA_CENTER} zoom={5} style={{ height: '100%', width: '100%' }}>
               <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
