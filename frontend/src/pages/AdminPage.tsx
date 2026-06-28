@@ -45,6 +45,12 @@ interface PendingReview {
 
 interface Profile { is_admin: boolean }
 
+interface AdminUser {
+  id: string
+  email: string
+  display_name: string | null
+}
+
 /* ─── Constants ──────────────────────────────────────────────────────────── */
 
 const CATEGORIES = ['Поради', 'Вирощування', 'Місячний календар', 'Технології', 'Мапи'] as const
@@ -89,7 +95,7 @@ function emptyForm() {
 export default function AdminPage() {
   const [isAdmin,   setIsAdmin]   = useState<boolean | null>(null)
   const [pageLoad,  setPageLoad]  = useState(true)
-  const [activeTab, setActiveTab] = useState<'nurseries' | 'reviews' | 'blog'>('nurseries')
+  const [activeTab, setActiveTab] = useState<'nurseries' | 'reviews' | 'admins' | 'blog'>('nurseries')
 
   // Nurseries
   const [nurseries, setNurseries] = useState<Nursery[]>([])
@@ -98,6 +104,12 @@ export default function AdminPage() {
   // Reviews (moderation)
   const [reviews,        setReviews]        = useState<PendingReview[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
+
+  // Admins
+  const [admins,        setAdmins]        = useState<AdminUser[]>([])
+  const [adminsLoading, setAdminsLoading] = useState(false)
+  const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [addingAdmin,   setAddingAdmin]   = useState(false)
 
   // Blog
   const [posts,       setPosts]       = useState<BlogPost[]>([])
@@ -141,6 +153,49 @@ export default function AdminPage() {
       .catch(() => toast.error('Не вдалось завантажити відгуки'))
       .finally(() => setReviewsLoading(false))
   }, [activeTab, isAdmin])
+
+  /* ── Admins ── */
+  useEffect(() => {
+    if (activeTab !== 'admins' || !isAdmin) return
+    setAdminsLoading(true)
+    api.get<AdminUser[]>('/api/admin/admins')
+      .then(r => setAdmins(r.data))
+      .catch(() => toast.error('Не вдалось завантажити адмінів'))
+      .finally(() => setAdminsLoading(false))
+  }, [activeTab, isAdmin])
+
+  async function addAdmin(e: React.FormEvent) {
+    e.preventDefault()
+    const email = newAdminEmail.trim()
+    if (!email) return
+    setAddingAdmin(true)
+    try {
+      await api.post('/api/admin/admins', { email })
+      setNewAdminEmail('')
+      toast.success('Адміна додано')
+      const r = await api.get<AdminUser[]>('/api/admin/admins')
+      setAdmins(r.data)
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      toast.error(detail ?? 'Не вдалось додати')
+    } finally {
+      setAddingAdmin(false)
+    }
+  }
+
+  async function revokeAdmin(id: string) {
+    setActing(id)
+    try {
+      await api.delete(`/api/admin/admins/${id}`)
+      setAdmins(prev => prev.filter(a => a.id !== id))
+      toast.success('Права знято')
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      toast.error(detail ?? 'Помилка')
+    } finally {
+      setActing(null)
+    }
+  }
 
   async function moderateReview(id: string, status: 'approved' | 'rejected') {
     setActing(id)
@@ -259,7 +314,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-8 w-fit">
-        {(['nurseries', 'reviews', 'blog'] as const).map(tab => (
+        {(['nurseries', 'reviews', 'admins', 'blog'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-150
               ${activeTab === tab ? 'bg-white text-forest shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -267,6 +322,8 @@ export default function AdminPage() {
               ? `🏡 Розсадники ${nurseries.length > 0 ? `(${nurseries.length})` : ''}`
               : tab === 'reviews'
               ? `⭐ Відгуки ${reviews.length > 0 ? `(${reviews.length})` : ''}`
+              : tab === 'admins'
+              ? '🛡 Адміни'
               : '📝 Блог'}
           </button>
         ))}
@@ -380,6 +437,52 @@ export default function AdminPage() {
                       </button>
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── ADMINS TAB ─────────────────────────────────────────────────── */}
+      {activeTab === 'admins' && (
+        <>
+          <div className="mb-6">
+            <h2 className="font-black text-sm uppercase tracking-wide text-gray-700 mb-1">Адміністратори</h2>
+            <p className="text-xs text-gray-400">Надайте або зніміть права доступу за email користувача.</p>
+          </div>
+
+          {/* Add admin */}
+          <form onSubmit={addAdmin} className="flex gap-2 mb-6 max-w-md">
+            <input
+              type="email" value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)}
+              placeholder="email@example.com" required
+              className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-forest"
+            />
+            <button type="submit" disabled={addingAdmin}
+              className="px-5 py-2.5 rounded-xl bg-forest text-white text-sm font-bold hover:bg-forest-dark transition-colors disabled:opacity-40 flex items-center gap-2 shrink-0">
+              {addingAdmin && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+              Додати
+            </button>
+          </form>
+
+          {/* Admins list */}
+          {adminsLoading ? (
+            <div className="space-y-2">{[0, 1].map(i => <div key={i} className="bg-white rounded-xl border border-gray-200 h-16 animate-pulse" />)}</div>
+          ) : admins.length === 0 ? (
+            <div className="text-center py-16 text-gray-400"><div className="text-4xl mb-3">🛡</div><p>Адмінів ще немає</p></div>
+          ) : (
+            <div className="space-y-2">
+              {admins.map(a => (
+                <div key={a.id} className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate">{a.display_name || a.email || a.id}</p>
+                    {a.email && <p className="text-xs text-gray-400 truncate">{a.email}</p>}
+                  </div>
+                  <button onClick={() => revokeAdmin(a.id)} disabled={acting === a.id}
+                    className="shrink-0 px-3 py-1.5 border-2 border-red-200 text-red-500 text-xs font-bold rounded-lg hover:bg-red-50 transition-colors disabled:opacity-40">
+                    Зняти права
+                  </button>
                 </div>
               ))}
             </div>
