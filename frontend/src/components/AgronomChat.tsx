@@ -196,8 +196,15 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
           and slides out from under it (translate), like the KB cards. Opacity
           only gates the panel-closed case so it can't linger orphaned. */}
       <div
-        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 flex flex-col transition-[transform,opacity] duration-300 ease-out ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
-        style={{ right: 'clamp(440px, 50vw, 760px)' }}
+        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
+        style={{
+          right: 'clamp(440px, 50vw, 760px)',
+          // Opacity ramps only AFTER the chat panel has slid into place (300ms);
+          // transform (the slide-out) is immediate so history still feels snappy.
+          transition: open
+            ? 'opacity 200ms ease 300ms, transform 300ms ease'
+            : 'opacity 0ms, transform 300ms ease',
+        }}
       >
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-100 shrink-0">
           <p className="font-bold text-sm text-gray-700">Історія розмов</p>
@@ -252,7 +259,7 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
                 Підказки до запитів
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showTips ? 'rotate-180' : ''}`} />
               </button>
-              <div className={`overflow-hidden transition-all duration-300 ease-out ${showTips ? 'max-h-96 opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${showTips ? 'max-h-96 mt-3' : 'max-h-0'}`}>
                 <div className="space-y-2">
                   {SUGGESTIONS.map(q => (
                     <button key={q} onClick={() => startChat(q)}
