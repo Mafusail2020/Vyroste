@@ -196,7 +196,7 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
           and slides out from under it (translate), like the KB cards. Opacity
           only gates the panel-closed case so it can't linger orphaned. */}
       <div
-        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
+        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 flex flex-col ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
         style={{
           right: 'clamp(440px, 50vw, 760px)',
           // Opacity ramps only AFTER the chat panel has slid into place (300ms);
