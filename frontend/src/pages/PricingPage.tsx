@@ -24,12 +24,13 @@ export default function PricingPage() {
   const { user } = useAuth()
   const navigate  = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [period, setPeriod] = useState<'monthly' | 'yearly'>('yearly')
 
   async function handleCheckout() {
     if (!user) { navigate('/login'); return }
     setLoading(true)
     try {
-      const { data } = await api.post<{ form_url: string; fields: Record<string, string> }>('/api/payments/checkout')
+      const { data } = await api.post<{ form_url: string; fields: Record<string, string> }>('/api/payments/checkout', { plan: period })
       const form = document.createElement('form')
       form.method = 'POST'
       form.action = data.form_url
@@ -52,9 +53,24 @@ export default function PricingPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
-      <div className="text-center mb-12">
+      <div className="text-center mb-8">
         <h1 className="text-4xl font-black text-forest uppercase mb-3">Оберіть план</h1>
         <p className="text-gray-500">Почніть безкоштовно — оновіться коли будете готові</p>
+      </div>
+
+      {/* Billing period toggle */}
+      <div className="flex justify-center mb-10">
+        <div className="inline-flex bg-gray-100 rounded-xl p-1">
+          {(['monthly', 'yearly'] as const).map(p => (
+            <button key={p} onClick={() => setPeriod(p)}
+              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                period === p ? 'bg-white text-forest shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}>
+              {p === 'monthly' ? 'Щомісячно' : 'Щорічно'}
+              {p === 'yearly' && <span className="ml-1.5 text-[10px] font-black text-forest bg-card-green rounded-full px-1.5 py-0.5">−67%</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
@@ -89,10 +105,12 @@ export default function PricingPage() {
           <div className="mb-6">
             <p className="text-xs font-bold text-white/60 uppercase tracking-wide mb-1">Преміум ⭐</p>
             <div className="flex items-end gap-1">
-              <span className="text-4xl font-black text-white">299</span>
-              <span className="text-white/60 mb-1">грн/рік</span>
+              <span className="text-4xl font-black text-white">{period === 'monthly' ? 100 : 399}</span>
+              <span className="text-white/60 mb-1">{period === 'monthly' ? 'грн/місяць' : 'грн/рік'}</span>
             </div>
-            <p className="text-white/50 text-xs mt-1">≈ 25 грн/місяць</p>
+            <p className="text-white/50 text-xs mt-1">
+              {period === 'monthly' ? 'Гнучко — скасуйте будь-коли' : '≈ 33 грн/місяць · економія 801 грн на рік'}
+            </p>
           </div>
           <ul className="space-y-3 mb-8">
             {PREMIUM_FEATURES.map(f => (

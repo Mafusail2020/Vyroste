@@ -12,7 +12,7 @@ import calendarPhoto from '../assets/HomePage/calendar_photo.png'
 import mapPhoto from '../assets/HomePage/map_photo.jpeg'
 import kbPhoto from '../assets/HomePage/kb_photo.jpg'
 import arrowArc from '../assets/arrow_with_arc.png'
-import arrowCurveDown from '../assets/arrow_curve_down.png'
+import arrowWithCircle from '../assets/arrow_with_circle.png'
 import markerL from '../assets/place_marker_l.png'
 import markerR from '../assets/place_marker_r.png'
 import questionMark from '../assets/question_mark.png'
@@ -96,14 +96,6 @@ function Hero() {
 
         {/* Left: text */}
         <div>
-          <span
-            className="inline-flex items-center gap-1.5 bg-card-green text-forest text-[11px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full mb-7 select-none"
-            style={fadeUp(0, -14)}
-          >
-            <Sparkles className="w-3 h-3" />
-            Сад та город без помилок
-          </span>
-
           <h1
             className="font-black text-forest uppercase leading-none mb-7"
             style={{ fontSize: 'clamp(46px, 6.5vw, 82px)', letterSpacing: '-2px', ...fadeUp(120) }}
@@ -456,8 +448,8 @@ function FeatureDetails() {
         imageEmoji="📅"
         imageSrc={calendarPhoto}
         decor={
-          <span className="hidden lg:block absolute top-[45%] left-0 -ml-20 z-20 pointer-events-none select-none">
-            <img src={arrowCurveDown} alt="" aria-hidden="true" className="doodle-draw doodle-outline w-28"
+          <span className="hidden lg:block absolute top-[45%] left-0 -ml-28 z-20 pointer-events-none select-none">
+            <img src={arrowWithCircle} alt="" aria-hidden="true" className="doodle-draw doodle-outline w-28"
               style={{ '--rot': '0deg' } as React.CSSProperties} />
           </span>
         }
@@ -498,14 +490,10 @@ function FeatureDetails() {
         imageEmoji="🥦"
         imageSrc={kbPhoto}
         decor={<>
-          <span className="absolute -top-9 left-8 z-30 pointer-events-none select-none">
-            <img src={questionMark} alt="" aria-hidden="true" className="doodle-draw w-14 sm:w-20 drop-shadow-md"
-              style={{ '--rot': '-12deg' } as React.CSSProperties} />
-          </span>
-          <span className="absolute -bottom-10 right-16 z-30 pointer-events-none select-none">
-            <img src={questionMark} alt="" aria-hidden="true" className="doodle-draw w-16 sm:w-24 drop-shadow-md"
-              style={{ '--rot': '12deg', animationDelay: '1.3s' } as React.CSSProperties} />
-          </span>
+          <img src={questionMark} alt="" aria-hidden="true"
+            className="absolute -top-9 left-8 w-14 sm:w-20 rotate-[-12deg] drop-shadow-md z-30 pointer-events-none select-none" />
+          <img src={questionMark} alt="" aria-hidden="true"
+            className="absolute -bottom-10 right-16 w-16 sm:w-24 rotate-12 drop-shadow-md z-30 pointer-events-none select-none" />
         </>}
         sectionBg="#D8C8F0"
         btnBg="#6D28D9"
@@ -547,7 +535,7 @@ function Pricing() {
             </h2>
             <p className="text-white/60 text-base mb-4">Розблокуйте всі можливості Виросте</p>
             <div className="flex items-end justify-center gap-2 mb-10">
-              <span className="text-white font-black" style={{ fontSize: 'clamp(48px, 6vw, 72px)', lineHeight: 1 }}>149</span>
+              <span className="text-white font-black" style={{ fontSize: 'clamp(48px, 6vw, 72px)', lineHeight: 1 }}>100</span>
               <span className="text-white/70 font-semibold text-xl mb-2">грн / місяць</span>
             </div>
             <ul className="text-left space-y-3 mb-10 max-w-sm mx-auto">
