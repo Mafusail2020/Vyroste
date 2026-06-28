@@ -60,7 +60,7 @@ export default function KnowledgePage() {
   // then slide out one-by-one to their grid positions, emerging from under the
   // card in front. Runs once, after the cards mount.
   useLayoutEffect(() => {
-    if (!isLanding || dealtRef.current) return
+    if (!isLanding || dealtRef.current || categories.length === 0) return
     const grid = gridRef.current
     if (!grid) return
     const cards = Array.from(grid.children) as HTMLElement[]
