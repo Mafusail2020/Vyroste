@@ -56,9 +56,9 @@ export default function KnowledgePage() {
     api.get<Category[]>('/api/knowledge/categories').then(r => setCategories(r.data)).catch(() => {})
   }, [])
 
-  // Deck-deal: cards start stacked at the first card's slot (later cards behind),
-  // then slide out one-by-one to their grid positions, emerging from under the
-  // card in front. Runs once, after the cards mount.
+  // Deck-deal: cards start stacked on their row's first card (later cards
+  // behind), then slide out to their grid positions, emerging from under the
+  // card in front. Stacked immediately; dealt once the grid scrolls into view.
   useLayoutEffect(() => {
     if (!isLanding || dealtRef.current || categories.length === 0) return
     const grid = gridRef.current
@@ -87,7 +87,7 @@ export default function KnowledgePage() {
     })
     void grid.offsetHeight   // flush the stacked start state
 
-    requestAnimationFrame(() => {
+    const deal = () => requestAnimationFrame(() => {
       rows.forEach(rowCards => {
         rowCards.forEach((card, j) => {
           card.style.transition = `transform 1s cubic-bezier(0.16,1,0.3,1) ${j * 130}ms, box-shadow 0.3s ease`
@@ -95,6 +95,13 @@ export default function KnowledgePage() {
         })
       })
     })
+
+    // Deal only when the grid enters the viewport (fires immediately if already visible).
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) { obs.disconnect(); deal() }
+    }, { threshold: 0.15 })
+    obs.observe(grid)
+    return () => obs.disconnect()
   }, [categories, isLanding])
 
   useEffect(() => {
