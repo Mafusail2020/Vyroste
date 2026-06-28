@@ -170,7 +170,7 @@ export default function AgronomPage() {
 
   return (
     <>
-    <div className={`max-w-3xl mx-auto px-6 py-12 transition-[margin] duration-300 ${chatOpen ? 'md:mr-[clamp(440px,50vw,760px)]' : ''}`}>
+    <div className={`max-w-3xl mx-auto px-6 py-12 transition-transform duration-300 ease-out ${chatOpen ? 'md:-translate-x-[clamp(220px,25vw,380px)]' : ''}`}>
       <div className="mb-8">
         <h1 className="text-3xl font-black text-forest uppercase mb-2">AI Агроном</h1>
         <p className="text-gray-500 max-w-xl">
@@ -268,7 +268,7 @@ export default function AgronomPage() {
       className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#6E9150] text-white shadow-xl hover:bg-[#5e7d42] hover:scale-105 grid place-items-center transition-all duration-300 ${chatOpen ? 'md:-translate-x-[clamp(440px,50vw,760px)] max-md:hidden' : ''}`}
       aria-label="AI Агроном чат"
     >
-      <Plus className={`w-7 h-7 transition-transform duration-300 ${chatOpen ? 'rotate-45' : 'rotate-0'}`} strokeWidth={3} />
+      <Plus className={`w-7 h-7 transition-transform duration-300 ${chatOpen ? 'rotate-45' : ''}`} strokeWidth={3} />
     </button>
 
     <AgronomChat
