@@ -191,9 +191,11 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
 
   return (
     <>
-      {/* History drawer — slides in to the LEFT of the chat panel */}
+      {/* History drawer — slides in to the LEFT of the chat panel.
+          Hidden via opacity (it sits far from the right edge, so a transform
+          alone can't push it off-screen). */}
       <div
-        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-transform duration-300 ease-out ${open && showHistory ? 'translate-x-0' : 'translate-x-full pointer-events-none'}`}
+        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-all duration-300 ease-out ${open && showHistory ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
         style={{ right: 'clamp(440px, 50vw, 760px)' }}
       >
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-100 shrink-0">
@@ -228,7 +230,7 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
             className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15"><MessagesSquare className="w-[18px] h-[18px]" /></button>
           <button onClick={newChat} title="Нова розмова"
             className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15"><Plus className="w-[18px] h-[18px]" strokeWidth={2.5} /></button>
-          <button onClick={onClose} title="Закрити"
+          <button onClick={() => { setShowHistory(false); onClose() }} title="Закрити"
             className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15"><X className="w-[18px] h-[18px]" /></button>
         </div>
 
