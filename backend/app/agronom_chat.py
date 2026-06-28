@@ -24,6 +24,9 @@ router = APIRouter(prefix="/agronom")
 
 _MAX_TOOL_ITERS = 5
 
+# Models the user may switch between in the chat UI.
+_ALLOWED_MODELS = {"claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"}
+
 _SYSTEM = (
     "Ти — AI-агроном Виросте, помічник для українських садівників-аматорів. Відповідай "
     "українською, простою людяною мовою (щоб зрозуміла навіть бабуся), стисло й по суті. "
@@ -155,10 +158,11 @@ def _scan_context(sb, chat: dict) -> str:
     )
 
 
-def _run_agent(sb, user_id: str, chat: dict, history: list[dict]) -> tuple[str, list[str]]:
+def _run_agent(sb, user_id: str, chat: dict, history: list[dict], model: str | None = None) -> tuple[str, list[str]]:
     """Bounded tool-use loop. Returns (final_text, tool_names_used)."""
     from anthropic import Anthropic
     client = Anthropic(api_key=settings.anthropic_api_key)
+    use_model = model if model in _ALLOWED_MODELS else settings.anthropic_model
 
     system = _SYSTEM + _scan_context(sb, chat)
     messages: list[dict] = [{"role": m["role"], "content": m["content"]} for m in history]
@@ -167,7 +171,7 @@ def _run_agent(sb, user_id: str, chat: dict, history: list[dict]) -> tuple[str, 
 
     for _ in range(_MAX_TOOL_ITERS):
         resp = client.messages.create(
-            model=settings.anthropic_model,
+            model=use_model,
             max_tokens=1024,
             system=system,
             tools=_TOOLS,
@@ -199,10 +203,12 @@ class CreateChat(BaseModel):
     calendar_id: str | None = None
     scan_id: str | None = None
     message: str | None = None
+    model: str | None = None
 
 
 class SendMessage(BaseModel):
     content: str
+    model: str | None = None
 
 
 def _own_chat(sb, chat_id: str, user_id: str) -> dict:
@@ -260,7 +266,7 @@ async def create_chat(body: CreateChat, current_user: dict = Depends(get_current
         user_msg = sb.table("agronom_messages").insert({
             "chat_id": chat["id"], "role": "user", "content": body.message.strip(),
         }).execute().data[0]
-        text, used = _run_agent(sb, current_user["id"], chat, [user_msg])
+        text, used = _run_agent(sb, current_user["id"], chat, [user_msg], body.model)
         sb.table("agronom_messages").insert({
             "chat_id": chat["id"], "role": "assistant", "content": text, "tool_trace": used,
         }).execute()
@@ -281,7 +287,7 @@ async def send_message(chat_id: str, body: SendMessage, current_user: dict = Dep
 
     sb.table("agronom_messages").insert({"chat_id": chat_id, "role": "user", "content": content}).execute()
     history = _messages(sb, chat_id)  # includes the just-stored user message
-    text, used = _run_agent(sb, current_user["id"], chat, history)
+    text, used = _run_agent(sb, current_user["id"], chat, history, body.model)
     assistant = sb.table("agronom_messages").insert({
         "chat_id": chat_id, "role": "assistant", "content": text, "tool_trace": used,
     }).execute().data[0]
