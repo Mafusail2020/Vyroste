@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.admin import require_admin
+from app.auth import get_current_user_optional
 from app.deps import get_supabase
 
 router = APIRouter(prefix="/knowledge")
@@ -88,18 +89,42 @@ class ArticleUpdate(BaseModel):
 
 # ── Public: categories ──────────────────────────────────────────────────────
 @router.get("/categories")
-def list_categories():
-    """Categories + published-article counts (for the /knowledge landing cards)."""
+def list_categories(current_user: dict | None = Depends(get_current_user_optional)):
+    """Categories + published-article counts (for the /knowledge landing cards).
+
+    When authenticated, also returns `read_count` per category (distinct
+    published articles the caller has opened) so the card progress bar can fill.
+    """
     sb = get_supabase()
     cats = sb.table("kb_categories").select("*").order("sort_order").execute().data or []
-    arts = sb.table("kb_articles").select("category_id").eq("published", True).execute().data or []
+    arts = sb.table("kb_articles").select("id,category_id").eq("published", True).execute().data or []
+
     counts: dict[str, int] = {}
+    article_cat: dict[str, str] = {}
     for a in arts:
         cid = a.get("category_id")
         if cid:
             counts[cid] = counts.get(cid, 0) + 1
+            article_cat[a["id"]] = cid
+
+    read_counts: dict[str, int] = {}
+    if current_user:
+        reads = (
+            sb.table("kb_article_reads")
+            .select("article_id")
+            .eq("user_id", current_user["id"])
+            .execute()
+            .data
+            or []
+        )
+        for r in reads:
+            cid = article_cat.get(r["article_id"])
+            if cid:
+                read_counts[cid] = read_counts.get(cid, 0) + 1
+
     for c in cats:
         c["article_count"] = counts.get(c["id"], 0)
+        c["read_count"] = read_counts.get(c["id"], 0)
     return cats
 
 
@@ -157,14 +182,45 @@ def get_article(slug_or_id: str):
     return article
 
 
-@router.post("/articles/{article_id}/view")
-def increment_view(article_id: str):
+@router.post("/articles/{article_id}/read")
+def mark_read(
+    article_id: str,
+    current_user: dict | None = Depends(get_current_user_optional),
+):
+    """Record that the caller opened an article.
+
+    For authenticated users this is idempotent: the global `views` counter is
+    bumped only the first time a given user opens the article (no more
+    double-counting on revisit or React StrictMode double-mount), and a row in
+    kb_article_reads feeds the per-category progress bar. Anonymous callers just
+    bump the global counter.
+    """
     sb = get_supabase()
     r = sb.table("kb_articles").select("views").eq("id", article_id).limit(1).execute()
     if not r.data:
         raise HTTPException(404)
-    views = (r.data[0].get("views") or 0) + 1
-    sb.table("kb_articles").update({"views": views}).eq("id", article_id).execute()
+
+    first_time = True
+    if current_user:
+        existing = (
+            sb.table("kb_article_reads")
+            .select("id")
+            .eq("user_id", current_user["id"])
+            .eq("article_id", article_id)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            first_time = False
+        else:
+            sb.table("kb_article_reads").insert(
+                {"user_id": current_user["id"], "article_id": article_id}
+            ).execute()
+
+    views = r.data[0].get("views") or 0
+    if first_time:
+        views += 1
+        sb.table("kb_articles").update({"views": views}).eq("id", article_id).execute()
     return {"views": views}
 
 

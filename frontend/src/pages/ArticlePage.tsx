@@ -39,6 +39,7 @@ export default function ArticlePage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
+  const readSentRef = useRef<string | null>(null)
 
   useEffect(() => {
     api.get<KbCategory[]>('/api/knowledge/categories').then(r => setCategories(r.data)).catch(() => {})
@@ -50,7 +51,11 @@ export default function ArticlePage() {
     api.get<Article>(`/api/knowledge/articles/${slug}`)
       .then(r => {
         setArticle(r.data)
-        api.post(`/api/knowledge/articles/${r.data.id}/view`).catch(() => {})
+        // Guard against React StrictMode's double-mount firing two reads.
+        if (readSentRef.current !== r.data.id) {
+          readSentRef.current = r.data.id
+          api.post(`/api/knowledge/articles/${r.data.id}/read`).catch(() => {})
+        }
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))

@@ -12,6 +12,7 @@ interface Category {
   description: string | null
   subcategories: string[] | null
   article_count: number
+  read_count: number
 }
 
 interface ArticleCard {
@@ -87,7 +88,7 @@ export default function KnowledgePage() {
                 className="flex-1 min-w-0 px-3 py-2 bg-transparent text-sm focus:outline-none"
               />
               <button type="submit"
-                className="px-3 flex items-center justify-center rounded bg-[#6E8B6E] hover:bg-[#5d795d] transition-colors">
+                className="px-3 flex items-center justify-center rounded bg-[#6E9150] hover:bg-[#5e7d42] transition-colors">
                 <Search className="w-4 h-4 text-white" />
               </button>
             </form>
@@ -106,6 +107,10 @@ export default function KnowledgePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {categories.map((c, i) => {
             const a = ACCENTS[Math.floor(i / 3) % ACCENTS.length]
+            // Progress bar fills with the share of articles the user has read.
+            const pct = c.article_count > 0
+              ? Math.min(100, Math.round((c.read_count / c.article_count) * 100))
+              : 0
             return (
               <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
                 {/* Header: title + counter on a row, split rule fully below */}
@@ -117,8 +122,8 @@ export default function KnowledgePage() {
                       <div className="text-[10px] text-gray-500">статті</div>
                     </div>
                   </div>
-                  {/* full-width rule: first 1/3 accent, rest grey */}
-                  <div className="h-[3px] rounded-full" style={{ background: `linear-gradient(to right, ${a.bar} 0 33%, #E5E7EB 33% 100%)` }} />
+                  {/* progress rule: accent share = read / total articles */}
+                  <div className="h-[3px] rounded-full" style={{ background: `linear-gradient(to right, ${a.bar} 0 ${pct}%, #E5E7EB ${pct}% 100%)` }} />
                 </div>
 
                 {c.description && <p className="text-sm text-gray-500 leading-relaxed mb-3">{c.description}</p>}
