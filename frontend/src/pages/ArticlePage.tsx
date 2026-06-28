@@ -92,7 +92,7 @@ export default function ArticlePage() {
 
           {activeCat && (
             <Link to={`/knowledge?category=${activeCat.slug}`}
-              className="inline-block mt-3 text-xs font-bold uppercase tracking-wide text-forest bg-forest/10 px-2.5 py-1 rounded-full">
+              className="inline-block ml-4 text-xs font-bold uppercase tracking-wide text-forest bg-forest/10 px-2.5 py-1 rounded-full">
               {activeCat.emoji} {activeCat.name}
             </Link>
           )}
