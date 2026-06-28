@@ -13,6 +13,7 @@ from app.knowledge import router as knowledge_router
 from app.reviews import router as reviews_router
 from app.newsletter import router as newsletter_router
 from app.diagnose import router as diagnose_router
+from app.agronom_chat import router as agronom_chat_router
 
 router = APIRouter()
 router.include_router(users_router)
@@ -28,6 +29,7 @@ router.include_router(knowledge_router)
 router.include_router(reviews_router)
 router.include_router(newsletter_router)
 router.include_router(diagnose_router)
+router.include_router(agronom_chat_router)
 
 
 @router.get("/health")
