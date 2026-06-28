@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from app.auth import get_current_user
 from app.deps import get_supabase
 from app.gdd import _resolve_calendar
+from app.weather import fetch_forecast
 from core.config import settings
 
 router = APIRouter(prefix="/diagnose")
@@ -51,9 +52,11 @@ _SYSTEM = (
     "Ти досвідчений агроном-діагност. За фото рослини визначаєш хворобу, шкідника "
     "або дефіцит живлення. Відповідай українською, простою мовою, щоб зрозуміла навіть "
     "бабуся без агрономічної освіти. Обов'язково враховуй наданий контекст саду "
-    "(регіон, заморозки, накопичену суму температур GDD, які культури вирощує користувач) "
-    "і прив'язуй поради та терміни обробки саме до нього. Якщо рослина здорова — скажи прямо. "
-    "Завжди викликай інструмент report_diagnosis."
+    "(регіон, заморозки, накопичену суму температур GDD, прогноз погоди, які культури вирощує "
+    "користувач) і прив'язуй поради та терміни обробки саме до нього. Якщо радиш обприскування — "
+    "ОБОВ'ЯЗКОВО врахуй прогноз опадів: не признач обробку контактними засобами перед дощем, "
+    "назви конкретний день/вікно («обробіть сьогодні-завтра, до дощу в …»). Якщо рослина здорова — "
+    "скажи прямо. Завжди викликай інструмент report_diagnosis."
 )
 
 
@@ -70,7 +73,7 @@ def _garden_context(sb, user_id: str, calendar_id: str | None) -> tuple[str, str
     region_id = cal["region_id"]
     z = (
         sb.table("climate_zones")
-        .select("region,avg_last_frost_date")
+        .select("region,avg_last_frost_date,latitude,longitude")
         .eq("id", region_id)
         .maybe_single()
         .execute()
@@ -114,6 +117,34 @@ def _garden_context(sb, user_id: str, calendar_id: str | None) -> tuple[str, str
         ))
         lines.append(f"Накопичена сума активних температур (GDD, база 10°C) з 1 квітня: ≈{gdd}.")
         banner_bits.append(f"GDD ≈{gdd}")
+
+    # Live forecast → real spray-window timing (the thing a generic chatbot can't do).
+    lat, lon = z.get("latitude"), z.get("longitude")
+    if lat is not None and lon is not None:
+        fc = fetch_forecast(float(lat), float(lon), days=5)
+        if fc:
+            fc_lines = []
+            rain_in = None
+            for i, d in enumerate(fc):
+                mm = d.get("precip_mm")
+                prob = d.get("precip_prob")
+                wet = (mm is not None and mm >= 1) or (prob is not None and prob >= 50)
+                if wet and rain_in is None:
+                    rain_in = i
+                fc_lines.append(
+                    f"  {d['date']}: {d.get('tmin')}…{d.get('tmax')}°C, "
+                    f"опади {mm if mm is not None else '?'} мм ({prob if prob is not None else '?'}%)"
+                )
+            lines.append("Прогноз погоди на наступні дні (для вибору вікна обробки):\n" + "\n".join(fc_lines))
+            if rain_in == 0:
+                lines.append("Сьогодні очікується дощ — обприскування контактними засобами краще відкласти.")
+                banner_bits.append("сьогодні дощ")
+            elif rain_in is not None:
+                lines.append(f"Дощ очікується через {rain_in} дн. — встигніть обробити до нього (сухе вікно).")
+                banner_bits.append(f"дощ через {rain_in} дн.")
+            else:
+                lines.append("Найближчі ~5 днів без істотних опадів — вікно для обробки відкрите.")
+                banner_bits.append("сухо ≥5 дн.")
 
     variety_ids = cal.get("selected_varieties") or []
     if variety_ids:
