@@ -46,6 +46,7 @@ export default function KnowledgePage() {
   const isLanding = !category && !q
 
   const [categories, setCategories] = useState<Category[]>([])
+  const [catLoading, setCatLoading] = useState(true)
   const [articles, setArticles] = useState<ArticleCard[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -54,7 +55,10 @@ export default function KnowledgePage() {
   const dealtRef = useRef(false)
 
   useEffect(() => {
-    api.get<Category[]>('/api/knowledge/categories').then(r => setCategories(r.data)).catch(() => {})
+    api.get<Category[]>('/api/knowledge/categories')
+      .then(r => setCategories(r.data))
+      .catch(() => {})
+      .finally(() => setCatLoading(false))
   }, [])
 
   // Deck-deal: cards start stacked on their row's first card (later cards
@@ -205,7 +209,12 @@ export default function KnowledgePage() {
               </div>
             )
           })}
-          {categories.length === 0 && (
+          {catLoading && (
+            <div className="col-span-full flex justify-center py-16">
+              <div className="w-8 h-8 border-4 border-forest border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {!catLoading && categories.length === 0 && (
             <div className="col-span-full text-center py-16 text-gray-400">
               <div className="text-4xl mb-3">📚</div>
               <p>Категорій ще немає</p>

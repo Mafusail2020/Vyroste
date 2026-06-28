@@ -16,7 +16,7 @@ import arrowArc from '../assets/arrow_with_arc.png'
 import arrowWithCircle from '../assets/arrow_with_circle.png'
 import markerL from '../assets/place_marker_l.png'
 import markerR from '../assets/place_marker_r.png'
-import questionMark from '../assets/question_mark.png'
+import questionMark from '../assets/questionmark_with_border.png'
 import ytGreen from '../assets/yt_green.png'
 import fbGreen from '../assets/facebook_green.png'
 import igGreen from '../assets/inst_green.png'
@@ -479,7 +479,7 @@ function FeatureDetails() {
           <img src={questionMark} alt="" aria-hidden="true"
             className="absolute -top-9 left-8 w-14 sm:w-20 rotate-[-12deg] drop-shadow-md z-30 pointer-events-none select-none" />
           <img src={questionMark} alt="" aria-hidden="true"
-            className="absolute -bottom-10 right-16 w-16 sm:w-24 rotate-12 drop-shadow-md z-30 pointer-events-none select-none" />
+            className="absolute -bottom-10 right-2 w-16 sm:w-24 rotate-12 drop-shadow-md z-30 pointer-events-none select-none" />
         </>}
         sectionBg="#D8C8F0"
         btnBg="#6D28D9"
