@@ -253,10 +253,10 @@ export default function MapPage() {
           <button
             onClick={findNearest}
             disabled={locating}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-[#7E8C6E]/50 text-[#7E8C6E] text-sm font-semibold hover:bg-[#7E8C6E]/10 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border-2 border-[#6E9150]/50 text-[#6E9150] text-sm font-semibold hover:bg-[#6E9150]/10 transition-colors disabled:opacity-50"
           >
             {locating
-              ? <span className="w-4 h-4 border-2 border-[#7E8C6E] border-t-transparent rounded-full animate-spin" />
+              ? <span className="w-4 h-4 border-2 border-[#6E9150] border-t-transparent rounded-full animate-spin" />
               : <Navigation className="w-4 h-4" />
             }
             Знайти найближчий
@@ -280,7 +280,7 @@ export default function MapPage() {
               {tagFilters.size > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {[...tagFilters].map(t => (
-                    <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#7E8C6E] text-white">
+                    <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[#6E9150] text-white">
                       {t}
                       <button onClick={() => toggleTag(t)} className="hover:text-white/70 leading-none">×</button>
                     </span>
@@ -358,7 +358,7 @@ export default function MapPage() {
                       {n.address && <p className="text-[11px] text-gray-500 mt-0.5 truncate">{n.address}</p>}
                     </div>
                     <button onClick={e => { e.stopPropagation(); select() }}
-                      className="shrink-0 self-stretch group flex items-center justify-center gap-1.5 bg-[#7E8C6E] text-white font-bold text-sm px-3 rounded-sm hover:bg-[#6f7d60] transition-colors">
+                      className="shrink-0 self-stretch group flex items-center justify-center gap-1.5 bg-[#6E9150] text-white font-bold text-sm px-3 rounded-sm hover:bg-[#5e7d42] transition-colors">
                       докладніше
                       <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
                     </button>
@@ -375,7 +375,7 @@ export default function MapPage() {
         >
           <Link
             to="/nurseries/register"
-            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-[#7E8C6E] text-white text-sm font-bold uppercase tracking-wide hover:bg-[#6f7d60] transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-[#6E9150] text-white text-sm font-bold uppercase tracking-wide hover:bg-[#5e7d42] transition-colors"
           >
             + Додати розсадник
           </Link>
@@ -438,7 +438,7 @@ export default function MapPage() {
                     rel="noopener noreferrer"
                     className="inline-block pt-1"
                   >
-                    <span className="px-3 py-1.5 bg-[#7E8C6E] text-white text-xs font-semibold rounded-lg hover:bg-[#6f7d60] inline-block">
+                    <span className="px-3 py-1.5 bg-[#6E9150] text-white text-xs font-semibold rounded-lg hover:bg-[#5e7d42] inline-block">
                       🗺️ Прокласти маршрут
                     </span>
                   </a>
