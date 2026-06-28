@@ -113,7 +113,9 @@ export default function AgronomPage() {
   const [unavailable, setUnavailable] = useState(false)
   const [result, setResult] = useState<Scan | null>(null)
   const [history, setHistory] = useState<Scan[]>([])
+  const [chatOpen, setChatOpen] = useState(false)
   const [seedScanId, setSeedScanId] = useState<string | null>(null)
+  const [seedImage, setSeedImage] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -146,6 +148,10 @@ export default function AgronomPage() {
       setHistory(prev => [r.data, ...prev])
       setFile(null)
       setPreview(null)
+      // Upload → diagnosis → chat auto-opens seeded with this scan → user keeps asking.
+      setSeedImage(r.data.image_url)
+      setSeedScanId(r.data.id)
+      setChatOpen(true)
     } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { detail?: string } } }
       if (e.response?.status === 503) { setUnavailable(true); return }
@@ -162,7 +168,8 @@ export default function AgronomPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
+    <>
+    <div className={`max-w-3xl mx-auto px-6 py-12 transition-[margin] duration-300 ${chatOpen ? 'md:mr-[clamp(440px,50vw,760px)]' : ''}`}>
       <div className="mb-8">
         <h1 className="text-3xl font-black text-forest uppercase mb-2">AI Агроном</h1>
         <p className="text-gray-500 max-w-xl">
@@ -220,7 +227,7 @@ export default function AgronomPage() {
             <div className="space-y-3">
               <ResultCard scan={result} />
               <button
-                onClick={() => setSeedScanId(result.id)}
+                onClick={() => { setSeedImage(result.image_url); setSeedScanId(result.id); setChatOpen(true) }}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border-2 border-forest/30 text-forest font-bold text-sm hover:bg-forest/5 transition-colors"
               >
                 💬 Запитати про цей діагноз
@@ -252,8 +259,25 @@ export default function AgronomPage() {
           )}
         </>
       )}
-
-      <AgronomChat calendarId={calId || undefined} seedScanId={seedScanId} onSeedHandled={() => setSeedScanId(null)} />
     </div>
+
+    {/* Floating toggle */}
+    <button
+      onClick={() => setChatOpen(o => !o)}
+      className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#6E9150] text-white shadow-xl hover:bg-[#5e7d42] hover:scale-105 transition-all grid place-items-center"
+      aria-label="AI Агроном чат"
+    >
+      <span className="text-3xl leading-none font-light">{chatOpen ? '✕' : '+'}</span>
+    </button>
+
+    <AgronomChat
+      open={chatOpen}
+      onClose={() => setChatOpen(false)}
+      calendarId={calId || undefined}
+      seedScanId={seedScanId}
+      seedImage={seedImage}
+      onSeedHandled={() => setSeedScanId(null)}
+    />
+    </>
   )
 }

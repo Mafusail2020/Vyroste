@@ -17,7 +17,12 @@ const TOOL_LABEL: Record<string, string> = {
   get_calendar:       'календар',
 }
 
-const SEED_PROMPT = 'Розкажи детальніше про мій діагноз і що робити далі.'
+const SEED_PROMPT = 'Що з моєю рослиною і що робити далі?'
+const SUGGESTIONS = [
+  'Чим обробити фітофтороз на томатах?',
+  'Коли садити часник у моєму регіоні?',
+  'Де купити мідний купорос поруч?',
+]
 
 // Tiny linkifier: /knowledge/slug + http(s) links → anchors, rest as text.
 function renderContent(text: string) {
@@ -31,12 +36,14 @@ function renderContent(text: string) {
   })
 }
 
-export default function AgronomChat({ calendarId, seedScanId, onSeedHandled }: {
+export default function AgronomChat({ open, onClose, calendarId, seedScanId, seedImage, onSeedHandled }: {
+  open: boolean
+  onClose: () => void
   calendarId?: string
   seedScanId?: string | null
+  seedImage?: string | null
   onSeedHandled?: () => void
 }) {
-  const [open, setOpen] = useState(false)
   const [chatId, setChatId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Msg[]>([])
   const [chats, setChats] = useState<Chat[]>([])
@@ -44,7 +51,9 @@ export default function AgronomChat({ calendarId, seedScanId, onSeedHandled }: {
   const [sending, setSending] = useState(false)
   const [unavailable, setUnavailable] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [headerImage, setHeaderImage] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const taRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (open) api.get<Chat[]>('/api/agronom/chats').then(r => setChats(r.data)).catch(() => {})
@@ -57,19 +66,23 @@ export default function AgronomChat({ calendarId, seedScanId, onSeedHandled }: {
   // Open seeded from a fresh diagnosis.
   useEffect(() => {
     if (!seedScanId) return
-    setOpen(true)
-    setShowHistory(false)
+    setHeaderImage(seedImage ?? null)
     startChat(SEED_PROMPT, seedScanId)
     onSeedHandled?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedScanId])
 
+  function autosize() {
+    const t = taRef.current
+    if (t) { t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 160)}px` }
+  }
+
   function newChat() {
-    setChatId(null); setMessages([]); setShowHistory(false)
+    setChatId(null); setMessages([]); setShowHistory(false); setHeaderImage(null)
   }
 
   async function loadChat(id: string) {
-    setShowHistory(false)
+    setShowHistory(false); setHeaderImage(null)
     try {
       const r = await api.get<{ chat: Chat; messages: Msg[] }>(`/api/agronom/chats/${id}`)
       setChatId(id); setMessages(r.data.messages)
@@ -97,6 +110,7 @@ export default function AgronomChat({ calendarId, seedScanId, onSeedHandled }: {
     const text = input.trim()
     if (!text || sending) return
     setInput('')
+    requestAnimationFrame(autosize)
     if (!chatId) { await startChat(text); return }
     setSending(true)
     setMessages(prev => [...prev, { id: `tmp-${Date.now()}`, role: 'user', content: text }])
@@ -110,109 +124,125 @@ export default function AgronomChat({ calendarId, seedScanId, onSeedHandled }: {
     }
   }
 
+  const empty = messages.length === 0 && !headerImage
+
   return (
-    <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-[60] w-14 h-14 rounded-full bg-[#6E9150] text-white text-2xl shadow-xl hover:bg-[#5e7d42] hover:scale-105 transition-all flex items-center justify-center"
-        aria-label="AI Агроном чат"
-      >
-        {open ? '✕' : '🌿'}
-      </button>
+    <div
+      className={`fixed top-24 right-0 bottom-0 z-40 w-full sm:w-[clamp(440px,50vw,760px)] bg-white border-l border-gray-200 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+      aria-hidden={!open}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 h-14 bg-forest text-white shrink-0">
+        <span className="text-lg">🌿</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-sm leading-tight">AI Агроном</p>
+          <p className="text-[11px] text-white/70 leading-tight">Ваш персональний помічник саду</p>
+        </div>
+        <button onClick={() => setShowHistory(s => !s)} title="Історія розмов"
+          className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15 text-sm">🕑</button>
+        <button onClick={newChat} title="Нова розмова"
+          className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15 text-sm">✏️</button>
+        <button onClick={onClose} title="Закрити"
+          className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15 text-lg leading-none">✕</button>
+      </div>
 
-      {/* Panel */}
-      {open && (
-        <div className="fixed z-[60] bottom-24 right-6 left-4 sm:left-auto sm:w-[390px] max-h-[72vh] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-forest text-white shrink-0">
-            <span className="text-lg">🌿</span>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm leading-tight">AI Агроном</p>
-              <p className="text-[11px] text-white/70 leading-tight">Запитайте про ваші рослини</p>
+      {/* History dropdown */}
+      {showHistory && (
+        <div className="border-b border-gray-100 max-h-52 overflow-y-auto shrink-0 bg-gray-50">
+          {chats.length === 0
+            ? <p className="text-xs text-gray-400 px-4 py-3">Ще немає збережених розмов</p>
+            : chats.map(c => (
+              <button key={c.id} onClick={() => loadChat(c.id)}
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white truncate ${c.id === chatId ? 'text-forest font-semibold' : 'text-gray-600'}`}>
+                {c.title}
+              </button>
+            ))}
+        </div>
+      )}
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6">
+          {unavailable ? (
+            <div className="text-center py-24 text-gray-400">
+              <div className="text-4xl mb-3">🌱</div>
+              <p className="font-semibold text-gray-500">AI скоро буде доступний</p>
             </div>
-            <button onClick={() => setShowHistory(s => !s)} title="Історія розмов"
-              className="px-2 py-1 rounded-lg hover:bg-white/15 text-sm">🕑</button>
-            <button onClick={newChat} title="Нова розмова"
-              className="px-2 py-1 rounded-lg hover:bg-white/15 text-sm">✏️</button>
-          </div>
-
-          {/* History dropdown */}
-          {showHistory && (
-            <div className="border-b border-gray-100 max-h-44 overflow-y-auto shrink-0 bg-gray-50">
-              {chats.length === 0
-                ? <p className="text-xs text-gray-400 px-4 py-3">Ще немає збережених розмов</p>
-                : chats.map(c => (
-                  <button key={c.id} onClick={() => loadChat(c.id)}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-white truncate ${c.id === chatId ? 'text-forest font-semibold' : 'text-gray-600'}`}>
-                    {c.title}
+          ) : empty ? (
+            <div className="py-10 text-center">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-card-green grid place-items-center text-2xl">🌿</div>
+              <p className="text-lg font-bold text-gray-800 mb-1">Чим допомогти?</p>
+              <p className="text-sm text-gray-400 mb-6">Запитайте про хвороби, посадку чи догляд — підкажу під ваш регіон.</p>
+              <div className="space-y-2 text-left">
+                {SUGGESTIONS.map(q => (
+                  <button key={q} onClick={() => startChat(q)}
+                    className="block w-full text-left text-sm px-4 py-3 rounded-xl border border-gray-200 hover:border-forest hover:bg-card-green/20 text-gray-700 transition-colors">
+                    {q}
                   </button>
                 ))}
+              </div>
             </div>
-          )}
-
-          {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-            {unavailable ? (
-              <div className="text-center py-10 text-gray-400">
-                <div className="text-3xl mb-2">🌱</div>
-                <p className="text-sm font-semibold text-gray-500">AI скоро буде доступний</p>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="text-center py-8 text-gray-400 text-sm">
-                <p className="mb-3">Привіт! 👋 Я ваш AI-агроном.</p>
-                <p>Запитайте, наприклад:</p>
-                <div className="mt-3 space-y-2">
-                  {['Чим обробити фітофтороз на томатах?', 'Коли садити часник у моєму регіоні?', 'Де купити мідний купорос поруч?'].map(q => (
-                    <button key={q} onClick={() => startChat(q)}
-                      className="block w-full text-left text-xs px-3 py-2 rounded-lg bg-gray-50 hover:bg-card-green/40 text-gray-600">
-                      {q}
-                    </button>
-                  ))}
+          ) : (
+            <div className="space-y-6">
+              {headerImage && (
+                <div className="flex justify-end">
+                  <img src={headerImage} alt="Фото рослини"
+                    className="max-w-[60%] rounded-2xl rounded-br-md border border-gray-100 shadow-sm" />
                 </div>
-              </div>
-            ) : messages.map(m => (
-              <div key={m.id} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-                  m.role === 'user' ? 'bg-[#6E9150] text-white' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {renderContent(m.content)}
-                  {m.role === 'assistant' && m.tool_trace && m.tool_trace.length > 0 && (
-                    <p className="mt-2 text-[10px] text-gray-400">
-                      🔧 переглянув: {m.tool_trace.map(t => TOOL_LABEL[t] ?? t).join(', ')}
-                    </p>
-                  )}
+              )}
+              {messages.map(m => m.role === 'user' ? (
+                <div key={m.id} className="flex justify-end">
+                  <div className="max-w-[82%] bg-card-green/60 text-gray-800 rounded-2xl rounded-br-md px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap">
+                    {renderContent(m.content)}
+                  </div>
                 </div>
-              </div>
-            ))}
-            {sending && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-2xl px-4 py-3 flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.15s]" />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.3s]" />
+              ) : (
+                <div key={m.id} className="flex gap-3">
+                  <div className="shrink-0 w-7 h-7 rounded-full bg-card-green grid place-items-center text-sm mt-0.5">🌿</div>
+                  <div className="min-w-0 flex-1 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                    {renderContent(m.content)}
+                    {m.tool_trace && m.tool_trace.length > 0 && (
+                      <p className="mt-2 text-[11px] text-gray-400">
+                        🔧 переглянув: {m.tool_trace.map(t => TOOL_LABEL[t] ?? t).join(', ')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Input */}
-          {!unavailable && (
-            <div className="border-t border-gray-100 p-2.5 flex gap-2 shrink-0">
-              <input
-                value={input} onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') send() }}
-                placeholder="Напишіть запитання…" disabled={sending}
-                className="flex-1 min-w-0 text-sm px-3 py-2 bg-gray-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest/30"
-              />
-              <button onClick={send} disabled={sending || !input.trim()}
-                className="shrink-0 w-10 h-10 rounded-xl bg-[#6E9150] text-white hover:bg-[#5e7d42] transition-colors disabled:opacity-40 flex items-center justify-center">
-                ➤
-              </button>
+              ))}
+              {sending && (
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-7 h-7 rounded-full bg-card-green grid place-items-center text-sm">🌿</div>
+                  <div className="flex gap-1 items-center h-7">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.15s]" />
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.3s]" />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
+      </div>
+
+      {/* Input — Claude-style rounded composer */}
+      {!unavailable && (
+        <div className="shrink-0 px-4 sm:px-6 pb-4 pt-2">
+          <div className="max-w-2xl mx-auto w-full flex items-end gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 focus-within:border-forest transition-colors shadow-sm">
+            <textarea
+              ref={taRef} rows={1} value={input}
+              onChange={e => { setInput(e.target.value); autosize() }}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+              placeholder="Напишіть запитання…" disabled={sending}
+              className="flex-1 min-w-0 resize-none bg-transparent text-sm leading-relaxed py-1.5 max-h-40 focus:outline-none"
+            />
+            <button onClick={send} disabled={sending || !input.trim()}
+              className="shrink-0 w-9 h-9 rounded-xl bg-[#6E9150] text-white hover:bg-[#5e7d42] transition-colors disabled:opacity-30 grid place-items-center">
+              ➤
+            </button>
+          </div>
+          <p className="max-w-2xl mx-auto text-[10px] text-gray-300 text-center mt-1.5">AI може помилятися — перевіряйте важливі поради.</p>
+        </div>
       )}
-    </>
+    </div>
   )
 }
