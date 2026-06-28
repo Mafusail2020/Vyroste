@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 
 const NAV_LINKS = [
   { to: '/calendar', label: 'Регіональний календар' },
+  { to: '/agronom',  label: 'AI Агроном 🔬' },
   { to: '/map',      label: 'Мапа розсадників' },
   { to: '/knowledge',label: 'База знань' },
   { to: '/blog',     label: 'Блог' },

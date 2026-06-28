@@ -24,6 +24,7 @@ import AdminKnowledgePage from './pages/AdminKnowledgePage'
 import KnowledgePage from './pages/KnowledgePage'
 import ArticlePage from './pages/ArticlePage'
 import CarePopoverDemo from './pages/CarePopoverDemo'
+import AgronomPage from './pages/AgronomPage'
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/cabinet" element={<CabinetPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/agronom" element={<AgronomPage />} />
             <Route path="/crops/add" element={<AddCropPage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/nurseries/register" element={<NurseryRegisterPage />} />

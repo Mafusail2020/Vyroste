@@ -94,6 +94,10 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
 - [x] Slice 12 — Blog CMS
   - Migration: `backend/migrations/004_blog_posts.sql` — run in Supabase SQL Editor
   - Seed: `python scripts/seed_blog_posts.py`
+  - Migration `016_blog_cover_image.sql`: adds `cover_image TEXT`. When set, the
+    photo replaces the emoji+gradient cover on blog cards + post hero (else emoji
+    fallback). Admin form uploads via `POST /api/blog/upload` → existing public
+    `article-images` bucket (path `blog/<uuid>.<ext>`).
 - [x] Slice 13 — Crop Categories + Varieties (frost-relative offsets)
   - Migration: `backend/migrations/005_crop_categories_varieties.sql`
   - Splits flat `crops` → `crop_categories` (Томат) 1─many `crop_varieties` (Сорт). Variety
@@ -163,3 +167,31 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
     `NurseryDetailOverlay` show real rating/count; overlay form posts from the account
     (avatar + display_name), votes hit the API. Admin moderation UI still TODO (approve via
     `/api/admin/reviews` or SQL for now).
+- [x] Slice 19 — Weekly Newsletter (admin: schedule + rich content + send-now)
+  - Migration: `backend/migrations/017_newsletter.sql` (singleton `newsletter` row id=1;
+    RLS on, no anon policies — backend service key bypasses). `send_dow` 0=Mon..6=Sun,
+    `send_hour` UTC; `blocks` JSONB (ordered heading/text/image/button).
+  - `app/newsletter.py`: admin `GET/PUT /api/newsletter`, `POST /api/newsletter/send`
+    (renders blocks → inline-styled HTML, sends to audience all|premium, returns count),
+    `POST /api/newsletter/upload` (image → public `article-images` bucket, path `newsletter/`).
+    `app/email.py` gains `send_html()`.
+  - Scheduler: hourly `newsletter_weekly` job polls the row and sends when day/hour (UTC)
+    match + not already sent that day (`last_sent_at` guard) — schedule is admin-editable.
+  - UI: AdminPage «✉️ Розсилка» tab — enable toggle, day+hour selects, subject, audience,
+    block composer (add/reorder/remove heading·text·image·button, photo upload), live
+    preview, «Зберегти» + inline-confirm «Надіслати зараз».
+- [x] Slice 20 — AI Агроном (photo plant diagnosis)
+  - Migration: `backend/migrations/018_plant_scans.sql` (`plant_scans` table, owner RLS).
+  - **Supabase Storage**: create a public bucket `plant-scans` (uploaded plant photos land there).
+  - Env: `ANTHROPIC_API_KEY` + `ANTHROPIC_MODEL` (default `claude-sonnet-4-6`) in `backend/.env`;
+    `requirements.txt` adds `anthropic`. Key-gated — `/api/diagnose` returns 503 if unset
+    (same pattern as WayForPay).
+  - `app/diagnose.py`: `POST /api/diagnose` (multipart photo + optional `calendar_id`/`crop`) →
+    uploads to Storage, builds a UA garden-context block (region + last-frost days + season GDD +
+    planted varieties via `_garden_context`, reusing `gdd._resolve_calendar`), calls Claude vision
+    with a forced `report_diagnosis` tool → structured JSON, saves a `plant_scans` row.
+    `GET /api/diagnose/history` + `DELETE /api/diagnose/{id}` (owner-scoped).
+  - Frontend: `AgronomPage.tsx` at `/agronom` (nav «AI Агроном 🔬», auth-guarded; CTA button on
+    CalendarPage toolbar). Uploader (camera capture) + calendar picker → result card (personalized
+    region/GDD banner = the data moat made visible, confidence ring, severity badge, step timeline,
+    timing kicker, prevention) + scan history. 503 → «AI скоро буде доступний» empty state.
