@@ -448,8 +448,8 @@ function FeatureDetails() {
         imageEmoji="📅"
         imageSrc={calendarPhoto}
         decor={
-          <span className="hidden lg:block absolute top-[45%] left-0 -ml-28 z-20 pointer-events-none select-none">
-            <img src={arrowWithCircle} alt="" aria-hidden="true" className="doodle-draw doodle-outline w-28"
+          <span className="hidden lg:block absolute top-[42%] left-0 -ml-40 z-20 pointer-events-none select-none">
+            <img src={arrowWithCircle} alt="" aria-hidden="true" className="doodle-draw doodle-outline w-44"
               style={{ '--rot': '0deg' } as React.CSSProperties} />
           </span>
         }
