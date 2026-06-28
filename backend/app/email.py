@@ -20,6 +20,11 @@ def _send(to_email: str, subject: str, html: str) -> None:
         smtp.sendmail(settings.from_email, to_email, msg.as_string())
 
 
+def send_html(to_email: str, subject: str, html: str) -> None:
+    """Public wrapper around the shared SMTP send (used by the newsletter)."""
+    _send(to_email, subject, html)
+
+
 def send_welcome_email(to_email: str) -> None:
     """Welcome email sent right after registration."""
     html = f"""<!DOCTYPE html>
