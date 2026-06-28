@@ -20,7 +20,7 @@ export default function Seo({ title, description, image, type = 'website', path 
   const url = `${SITE}${pathname}`
   const desc = (description && description.trim()) || DEFAULT_DESC
   const img = image || DEFAULT_IMG
-  const fullTitle = title ? `${title} · Виросте` : 'Виросте — садовий помічник'
+  const fullTitle = title ? `${title} · Виросте` : 'Виросте'
 
   return (
     <>
