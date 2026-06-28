@@ -1,10 +1,14 @@
+import uuid
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 from app.deps import get_supabase
 from app.admin import require_admin
 
 router = APIRouter(prefix="/blog")
+
+IMAGE_BUCKET = "article-images"      # shared with the knowledge base
+MAX_IMAGE_BYTES = 5 * 1024 * 1024    # 5 MB
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
@@ -18,6 +22,7 @@ class PostCreate(BaseModel):
     emoji: str = "🌱"
     gradient_from: str = "#BBE3BB"
     gradient_to: str = "#C2E3F5"
+    cover_image: str | None = None   # photo URL; overrides emoji/gradient when set
     published: bool = True
 
 
@@ -30,6 +35,7 @@ class PostUpdate(BaseModel):
     emoji: str | None = None
     gradient_from: str | None = None
     gradient_to: str | None = None
+    cover_image: str | None = None
     published: bool | None = None
 
 
@@ -112,3 +118,24 @@ def feature_post(post_id: UUID):
     if not r.data:
         raise HTTPException(404)
     return r.data[0]
+
+
+# ── Admin: cover image upload → Supabase Storage ─────────────────────────────────
+@router.post("/upload", dependencies=[Depends(require_admin)])
+async def upload_cover(file: UploadFile = File(...)):
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(400, "Only image uploads are allowed")
+    blob = await file.read()
+    if len(blob) > MAX_IMAGE_BYTES:
+        raise HTTPException(400, "Image too large (max 5 MB)")
+
+    ext = (file.filename or "img").rsplit(".", 1)[-1].lower()
+    path = f"blog/{uuid.uuid4().hex}.{ext}"
+    sb = get_supabase()
+    try:
+        sb.storage.from_(IMAGE_BUCKET).upload(
+            path, blob, {"content-type": file.content_type, "upsert": "false"}
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Upload failed: {e}")
+    return {"url": sb.storage.from_(IMAGE_BUCKET).get_public_url(path)}

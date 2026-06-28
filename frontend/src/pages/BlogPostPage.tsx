@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../lib/api'
+import Seo from '../components/Seo'
 
 interface Post {
   id: string
@@ -12,6 +13,7 @@ interface Post {
   emoji: string
   gradient_from: string
   gradient_to: string
+  cover_image: string | null
   views: number
   created_at: string
 }
@@ -71,15 +73,16 @@ export default function BlogPostPage() {
 
   return (
     <article className="bg-cream min-h-screen">
+      <Seo title={post.title} description={post.excerpt} image={post.cover_image} type="article" path={`/blog/${post.id}`} />
 
       {/* Hero image */}
       <div
         className="h-64 md:h-80 flex items-center justify-center text-8xl select-none relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${post.gradient_from}, ${post.gradient_to})` }}
+        style={post.cover_image ? undefined : { background: `linear-gradient(135deg, ${post.gradient_from}, ${post.gradient_to})` }}
       >
-        <span className="drop-shadow-sm" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}>
-          {post.emoji}
-        </span>
+        {post.cover_image
+          ? <img src={post.cover_image} alt={post.title} className="absolute inset-0 w-full h-full object-cover" />
+          : <span className="drop-shadow-sm" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))' }}>{post.emoji}</span>}
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
       </div>
 
@@ -108,17 +111,9 @@ export default function BlogPostPage() {
         </div>
 
         {/* Title */}
-        <h1 className="font-black text-gray-900 leading-tight mb-4" style={{ fontSize: 'clamp(22px, 3.5vw, 36px)' }}>
+        <h1 className="font-black text-gray-900 leading-tight mb-8" style={{ fontSize: 'clamp(22px, 3.5vw, 36px)' }}>
           {post.title}
         </h1>
-
-        {/* Author */}
-        <div className="flex items-center gap-2 mb-8 pb-8 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-full bg-card-green flex items-center justify-center text-sm font-black text-forest shrink-0">
-            {post.author[0]}
-          </div>
-          <span className="text-sm font-semibold text-gray-600">{post.author}</span>
-        </div>
 
         {/* Body */}
         {paragraphs.length > 0 ? (

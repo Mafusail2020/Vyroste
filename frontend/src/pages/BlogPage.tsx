@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
+import Seo from '../components/Seo'
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -13,6 +14,7 @@ interface Post {
   emoji: string
   gradient_from: string
   gradient_to: string
+  cover_image: string | null
   is_featured: boolean
   views: number
   created_at: string
@@ -78,8 +80,10 @@ function FeaturedCard({ post }: { post: Post }) {
     <FadeIn from="left" className="group h-full">
       <Link to={`/blog/${post.id}`} className="flex flex-col bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300 h-full">
         <div className="h-56 flex items-center justify-center text-7xl select-none relative overflow-hidden"
-          style={{ background: `linear-gradient(135deg, ${post.gradient_from}, ${post.gradient_to})` }}>
-          <span className="group-hover:scale-110 transition-transform duration-500 drop-shadow-sm">{post.emoji}</span>
+          style={post.cover_image ? undefined : { background: `linear-gradient(135deg, ${post.gradient_from}, ${post.gradient_to})` }}>
+          {post.cover_image
+            ? <img src={post.cover_image} alt={post.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            : <span className="group-hover:scale-110 transition-transform duration-500 drop-shadow-sm">{post.emoji}</span>}
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
           <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full text-forest">
             ⭐ Головна
@@ -91,13 +95,7 @@ function FeaturedCard({ post }: { post: Post }) {
             {post.title}
           </h2>
           {post.excerpt && <p className="text-gray-500 text-sm leading-relaxed flex-1 mb-5 line-clamp-3">{post.excerpt}</p>}
-          <div className="flex items-center justify-between text-xs text-gray-400 mt-auto pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-card-green flex items-center justify-center text-xs font-black text-forest">
-                {post.author[0]}
-              </div>
-              <span className="font-medium text-gray-500">{post.author}</span>
-            </div>
+          <div className="flex items-center justify-end text-xs text-gray-400 mt-auto pt-4">
             <span className="flex items-center gap-1">👁 {post.views}</span>
           </div>
         </div>
@@ -145,8 +143,10 @@ function PostCard({ post, delay }: { post: Post; delay: number }) {
       <Link to={`/blog/${post.id}`}
         className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 h-full">
         <div className="h-36 flex items-center justify-center text-5xl select-none relative overflow-hidden"
-          style={{ background: `linear-gradient(135deg, ${post.gradient_from}, ${post.gradient_to})` }}>
-          <span className="group-hover:scale-110 transition-transform duration-500">{post.emoji}</span>
+          style={post.cover_image ? undefined : { background: `linear-gradient(135deg, ${post.gradient_from}, ${post.gradient_to})` }}>
+          {post.cover_image
+            ? <img src={post.cover_image} alt={post.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            : <span className="group-hover:scale-110 transition-transform duration-500">{post.emoji}</span>}
         </div>
         <div className="flex flex-col flex-1 p-4">
           <CategoryBadge cat={post.category} className="mb-2 self-start" />
@@ -156,8 +156,7 @@ function PostCard({ post, delay }: { post: Post; delay: number }) {
           {post.excerpt && (
             <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">{post.excerpt}</p>
           )}
-          <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-100">
-            <span className="font-medium text-gray-500 truncate max-w-[100px]">{post.author}</span>
+          <div className="flex items-center justify-end text-xs text-gray-400 pt-3">
             <span className="flex items-center gap-1 shrink-0">👁 {post.views}</span>
           </div>
         </div>
@@ -210,6 +209,7 @@ export default function BlogPage() {
 
   return (
     <div className="bg-cream min-h-screen">
+      <Seo title="Блог" description="Статті про місячні календарі, GDD-метод, мульчування та сезонні поради від практиків Виросте." path="/blog" />
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-14 pb-10">
