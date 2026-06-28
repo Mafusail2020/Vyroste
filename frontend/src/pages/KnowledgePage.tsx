@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import api from '../lib/api'
@@ -48,14 +48,43 @@ export default function KnowledgePage() {
   const [articles, setArticles] = useState<ArticleCard[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [shown, setShown] = useState(false)   // stagger trigger for landing cards
+
+  const gridRef = useRef<HTMLDivElement>(null)
+  const dealtRef = useRef(false)
 
   useEffect(() => {
-    api.get<Category[]>('/api/knowledge/categories').then(r => {
-      setCategories(r.data)
-      requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)))
-    }).catch(() => {})
+    api.get<Category[]>('/api/knowledge/categories').then(r => setCategories(r.data)).catch(() => {})
   }, [])
+
+  // Deck-deal: cards start stacked at the first card's slot (later cards behind),
+  // then slide out one-by-one to their grid positions, emerging from under the
+  // card in front. Runs once, after the cards mount.
+  useLayoutEffect(() => {
+    if (!isLanding || dealtRef.current) return
+    const grid = gridRef.current
+    if (!grid) return
+    const cards = Array.from(grid.children) as HTMLElement[]
+    if (cards.length === 0) return
+    dealtRef.current = true
+
+    const baseL = cards[0].offsetLeft
+    const baseT = cards[0].offsetTop
+    cards.forEach((card, i) => {
+      const dx = baseL - card.offsetLeft
+      const dy = baseT - card.offsetTop
+      card.style.transition = 'none'
+      card.style.transform = `translate(${dx}px, ${dy}px)`
+      card.style.zIndex = String(cards.length - i)   // card 0 on top → rest slide out from under
+    })
+    void grid.offsetHeight   // flush the stacked start state
+
+    requestAnimationFrame(() => {
+      cards.forEach((card, i) => {
+        card.style.transition = `transform 0.5s cubic-bezier(0.16,1,0.3,1) ${i * 130}ms, box-shadow 0.3s ease`
+        card.style.transform = 'translate(0, 0)'
+      })
+    })
+  }, [categories, isLanding])
 
   useEffect(() => {
     if (isLanding) { setLoading(false); return }
@@ -107,7 +136,7 @@ export default function KnowledgePage() {
         </div>
 
         {/* Category cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {categories.map((c, i) => {
             const a = ACCENTS[Math.floor(i / 3) % ACCENTS.length]
             // Progress bar fills with the share of articles the user has read.
@@ -115,12 +144,7 @@ export default function KnowledgePage() {
               ? Math.min(100, Math.round((c.read_count / c.article_count) * 100))
               : 0
             return (
-              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md"
-                style={{
-                  opacity: shown ? 1 : 0,
-                  transform: shown ? 'none' : 'translateX(-40px)',
-                  transition: `opacity 0.5s ease-out ${i * 90}ms, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 90}ms, box-shadow 0.3s ease`,
-                }}>
+              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md">
                 {/* Header: title + counter on a row, split rule fully below */}
                 <div className="mb-3">
                   <div className="flex items-start justify-between gap-3 mb-2.5">
