@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import api from '../lib/api'
 import AgronomChat from '../components/AgronomChat'
 
@@ -268,7 +268,7 @@ export default function AgronomPage() {
       className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#6E9150] text-white shadow-xl hover:bg-[#5e7d42] hover:scale-105 grid place-items-center transition-all duration-300 ${chatOpen ? 'md:-translate-x-[clamp(440px,50vw,760px)] max-md:hidden' : ''}`}
       aria-label="AI Агроном чат"
     >
-      {chatOpen ? <X className="w-6 h-6" strokeWidth={2.5} /> : <Plus className="w-7 h-7" strokeWidth={3} />}
+      <Plus className={`w-7 h-7 transition-transform duration-300 ${chatOpen ? 'rotate-45' : ''}`} strokeWidth={3} />
     </button>
 
     <AgronomChat

@@ -62,6 +62,7 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
   const [headerImage, setHeaderImage] = useState<string | null>(null)
   const [model, setModel] = useState(MODELS[0].id)
   const [modelMenu, setModelMenu] = useState(false)
+  const [showTips, setShowTips] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const taRef = useRef<HTMLTextAreaElement>(null)
 
@@ -195,8 +196,15 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
           and slides out from under it (translate), like the KB cards. Opacity
           only gates the panel-closed case so it can't linger orphaned. */}
       <div
-        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-all duration-300 ease-out ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
-        style={{ right: 'clamp(440px, 50vw, 760px)' }}
+        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
+        style={{
+          right: 'clamp(440px, 50vw, 760px)',
+          // Opacity ramps only AFTER the chat panel has slid into place (300ms);
+          // transform (the slide-out) is immediate so history still feels snappy.
+          transition: open
+            ? 'opacity 200ms ease 300ms, transform 300ms ease'
+            : 'opacity 150ms ease, transform 300ms ease',
+        }}
       >
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-100 shrink-0">
           <p className="font-bold text-sm text-gray-700">Історія розмов</p>
@@ -216,16 +224,13 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
 
       {/* Main panel */}
       <div
-        className={`fixed top-24 right-0 bottom-0 z-40 w-full sm:w-[clamp(440px,50vw,760px)] bg-white border-l border-gray-200 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed top-24 right-0 bottom-0 z-40 w-full sm:w-[clamp(440px,50vw,760px)] bg-white border-l border-gray-200 flex flex-col transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
         aria-hidden={!open}
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 h-14 bg-forest text-white shrink-0">
-          <span className="text-lg">🌿</span>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm leading-tight">AI Агроном</p>
-            <p className="text-[11px] text-white/70 leading-tight">Ваш персональний помічник саду</p>
-          </div>
+          <span className="text-xl">🌿</span>
+          <p className="flex-1 min-w-0 font-bold text-lg truncate">AI Агроном</p>
           <button onClick={() => setShowHistory(s => !s)} title="Історія розмов"
             className="w-8 h-8 grid place-items-center rounded-lg hover:bg-white/15"><MessagesSquare className="w-[18px] h-[18px]" /></button>
           <button onClick={newChat} title="Нова розмова"
@@ -248,13 +253,22 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
             <p className="text-xl font-bold text-gray-800 mb-1">Чим допомогти?</p>
             <p className="text-sm text-gray-400 mb-6 text-center">Запитайте про хвороби, посадку чи догляд — підкажу під ваш регіон.</p>
             <div className="w-full">{composer}</div>
-            <div className="max-w-2xl mx-auto w-full space-y-2 mt-4">
-              {SUGGESTIONS.map(q => (
-                <button key={q} onClick={() => startChat(q)}
-                  className="block w-full text-left text-sm px-4 py-3 rounded-xl border border-gray-200 hover:border-forest hover:bg-card-green/20 text-gray-700 transition-colors">
-                  {q}
-                </button>
-              ))}
+            <div className="max-w-2xl mx-auto w-full mt-2">
+              <button onClick={() => setShowTips(t => !t)}
+                className="mx-auto flex items-center gap-1 text-xs text-gray-400 hover:text-gray-500 transition-colors">
+                Підказки до запитів
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showTips ? 'rotate-180' : ''}`} />
+              </button>
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${showTips ? 'max-h-96 mt-3' : 'max-h-0'}`}>
+                <div className="space-y-2">
+                  {SUGGESTIONS.map(q => (
+                    <button key={q} onClick={() => startChat(q)}
+                      className="block w-full text-left text-sm px-4 py-3 rounded-xl border border-gray-200 hover:border-forest hover:bg-card-green/20 text-gray-700 transition-colors">
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         ) : (
