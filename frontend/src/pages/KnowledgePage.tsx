@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import api from '../lib/api'
 import KbSidebar, { type KbCategory as SidebarCategory } from '../components/KbSidebar'
+import arrowCurveDown from '../assets/arrow_curve_down.png'
 
 interface Category {
   id: string
@@ -93,10 +94,8 @@ export default function KnowledgePage() {
               </button>
             </form>
             {/* hand-drawn arrow */}
-            <svg className="hidden lg:block absolute -bottom-16 left-24 text-gray-300" width="120" height="60" viewBox="0 0 120 60" fill="none">
-              <path d="M5 10 C 40 5, 70 20, 95 45" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M85 38 L97 47 L84 52" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img src={arrowCurveDown} alt="" aria-hidden="true"
+              className="hidden lg:block absolute -bottom-16 left-40 w-32 pointer-events-none select-none" />
           </div>
           <div className="rounded-2xl overflow-hidden shadow-lg aspect-[16/9] bg-card-green">
             <img src={HERO_IMG} alt="Сад" className="w-full h-full object-cover" loading="lazy" />
