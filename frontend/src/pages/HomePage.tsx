@@ -199,7 +199,7 @@ function Tagline() {
 const FEATURE_CARDS = [
   {
     icon: Calendar,
-    cardBg: 'bg-blue-50/80',
+    cardBg: 'bg-card-blue',
     iconChip: 'bg-blue-100',
     iconColor: 'text-blue-600',
     btn: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
@@ -210,7 +210,7 @@ const FEATURE_CARDS = [
   },
   {
     icon: MapPin,
-    cardBg: 'bg-green-50/80',
+    cardBg: 'bg-card-green',
     iconChip: 'bg-green-100',
     iconColor: 'text-green-600',
     btn: 'bg-green-100 text-green-700 hover:bg-green-200',
@@ -221,7 +221,7 @@ const FEATURE_CARDS = [
   },
   {
     icon: BookOpen,
-    cardBg: 'bg-purple-50/80',
+    cardBg: 'bg-card-purple',
     iconChip: 'bg-purple-100',
     iconColor: 'text-purple-600',
     btn: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
@@ -232,7 +232,7 @@ const FEATURE_CARDS = [
   },
   {
     icon: Newspaper,
-    cardBg: 'bg-amber-50/80',
+    cardBg: 'bg-[#FBE6BC]',
     iconChip: 'bg-amber-100',
     iconColor: 'text-amber-600',
     btn: 'bg-amber-100 text-amber-700 hover:bg-amber-200',

@@ -89,11 +89,14 @@ export default function KnowledgePage() {
     void grid.offsetHeight   // flush the stacked start state
 
     const deal = () => requestAnimationFrame(() => {
+      let rowIdx = 0   // rows are insertion-ordered top→bottom
       rows.forEach(rowCards => {
+        const rowDelay = rowIdx * 150   // 1st row 0s, 2nd 0.15s, 3rd 0.3s, …
         rowCards.forEach((card, j) => {
-          card.style.transition = `transform 1s cubic-bezier(0.16,1,0.3,1) ${j * 130}ms, box-shadow 0.3s ease`
+          card.style.transition = `transform 1s cubic-bezier(0.16,1,0.3,1) ${rowDelay + j * 130}ms, box-shadow 0.3s ease`
           card.style.transform = 'translate(0, 0)'
         })
+        rowIdx++
       })
     })
 

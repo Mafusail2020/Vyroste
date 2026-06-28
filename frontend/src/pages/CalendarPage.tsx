@@ -582,7 +582,7 @@ export default function CalendarPage() {
           <div className="ml-auto flex items-center gap-2">
             <Link to="/agronom" className={`${BTN_BASE} ${BTN_REST} flex items-center gap-1.5`}
               title="AI-діагностика хворої рослини за фото">
-              🔬 <span className="hidden sm:inline">Хвора рослина?</span>
+              <span className="hidden sm:inline">Хвора рослина?</span>
             </Link>
             {showDragHint && (
               <span className="text-xs text-gray-400 hidden sm:flex items-center gap-1.5">
