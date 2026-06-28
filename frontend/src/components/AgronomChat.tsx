@@ -180,7 +180,7 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
             </div>
 
             <button onClick={send} disabled={sending || !input.trim()}
-              className="shrink-0 w-8 h-8 rounded-lg bg-[#6E9150] text-white hover:bg-[#5e7d42] transition-all duration-300 disabled:opacity-30 grid place-items-center">
+              className="shrink-0 w-8 h-8 rounded-lg bg-[#6E9150] text-white hover:bg-[#5e7d42] transition-all duration-150 disabled:opacity-30 grid place-items-center">
               <ArrowUp className="w-4 h-4" strokeWidth={2.5} />
             </button>
           </div>
