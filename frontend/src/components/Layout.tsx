@@ -87,7 +87,7 @@ export default function Layout() {
                 </Link>
                 <Link
                   to="/register"
-                  className="text-sm px-4 py-2 rounded-xl bg-forest text-white font-semibold hover:bg-forest-dark transition-colors"
+                  className="text-sm px-4 py-2 rounded-xl bg-[#6E9150] text-white font-semibold hover:bg-[#5e7d42] transition-colors"
                 >
                   Реєстрація
                 </Link>

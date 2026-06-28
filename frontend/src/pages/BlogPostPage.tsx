@@ -137,7 +137,7 @@ export default function BlogPostPage() {
         <div className="mt-12 pt-8 border-t border-gray-200">
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors hover:scale-[1.02] active:scale-[0.98]"
           >
             ← Ще статті
           </Link>

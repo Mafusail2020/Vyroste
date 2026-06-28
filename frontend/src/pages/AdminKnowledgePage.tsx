@@ -218,7 +218,7 @@ export default function AdminKnowledgePage() {
         <div className="flex justify-end gap-3 pt-2">
           <button onClick={() => setForm(null)} className="px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold text-sm hover:border-gray-300">Скасувати</button>
           <button onClick={save} disabled={saving}
-            className="px-6 py-2.5 rounded-xl bg-forest text-white font-black text-sm uppercase tracking-wide hover:bg-forest-dark disabled:opacity-50">
+            className="px-6 py-2.5 rounded-xl bg-[#6E9150] text-white font-black text-sm uppercase tracking-wide hover:bg-[#5e7d42] disabled:opacity-50">
             {saving ? 'Збереження…' : 'Зберегти'}
           </button>
         </div>
@@ -232,7 +232,7 @@ export default function AdminKnowledgePage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-black text-forest uppercase">База знань — редактор</h1>
         <button onClick={() => setForm(emptyForm())}
-          className="px-4 py-2.5 rounded-xl bg-forest text-white text-sm font-bold uppercase tracking-wide hover:bg-forest-dark">
+          className="px-4 py-2.5 rounded-xl bg-[#6E9150] text-white text-sm font-bold uppercase tracking-wide hover:bg-[#5e7d42]">
           + Нова стаття
         </button>
       </div>

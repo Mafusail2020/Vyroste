@@ -48,7 +48,7 @@ export default function PaymentSuccessPage() {
       </p>
       <button
         onClick={() => navigate('/dashboard')}
-        className="mt-4 px-8 py-3 rounded-xl bg-forest text-white font-black uppercase tracking-wide hover:bg-forest-dark transition-colors"
+        className="mt-4 px-8 py-3 rounded-xl bg-[#6E9150] text-white font-black uppercase tracking-wide hover:bg-[#5e7d42] transition-colors"
       >
         До дашборду →
       </button>

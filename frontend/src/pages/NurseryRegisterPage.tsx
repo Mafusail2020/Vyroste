@@ -239,7 +239,7 @@ export default function NurseryRegisterPage() {
       <div className="w-16 h-16 rounded-2xl bg-forest/10 text-forest flex items-center justify-center mx-auto mb-5"><Check className="w-8 h-8" /></div>
       <h2 className="text-2xl font-black text-forest uppercase mb-3">Заявку надіслано!</h2>
       <p className="text-gray-500 mb-8">Ваш розсадник відправлено на перевірку. Ми зв'яжемось з вами протягом 3 робочих днів.</p>
-      <button onClick={() => navigate('/map')} className="px-6 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase hover:bg-forest-dark transition-colors">До мапи</button>
+      <button onClick={() => navigate('/map')} className="px-6 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase hover:bg-[#5e7d42] transition-colors">До мапи</button>
     </div>
   )
 
@@ -438,7 +438,7 @@ export default function NurseryRegisterPage() {
             Скасувати
           </button>
           <button type="submit" disabled={submitting}
-            className="flex items-center gap-2 px-7 py-3 rounded-xl bg-forest text-white font-black text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+            className="flex items-center gap-2 px-7 py-3 rounded-xl bg-[#6E9150] text-white font-black text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             {submitting ? 'Збереження…' : 'Надіслати на перевірку'}
           </button>

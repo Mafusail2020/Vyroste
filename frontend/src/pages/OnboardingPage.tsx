@@ -257,7 +257,7 @@ export default function OnboardingPage() {
                   onClick={() => setCropFilter(type)}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
                     cropFilter === type
-                      ? 'bg-forest text-white'
+                      ? 'bg-[#6E9150] text-white'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
@@ -323,7 +323,7 @@ export default function OnboardingPage() {
                                   onClick={() => toggleVariety(v.id)}
                                   className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
                                     vSel
-                                      ? 'border-forest bg-forest text-white'
+                                      ? 'border-[#6E9150] bg-[#6E9150] text-white'
                                       : 'border-gray-200 bg-white text-gray-600 hover:border-forest/40'
                                   }`}
                                 >
@@ -358,7 +358,7 @@ export default function OnboardingPage() {
             <button
               onClick={() => setStep(step + 1)}
               disabled={step === 0 ? (!regionId || loadingData) : !plotType}
-              className="px-6 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-40"
+              className="px-6 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors disabled:opacity-40"
             >
               Далі
             </button>
@@ -366,7 +366,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleFinish}
               disabled={submitting || selectedCrops.size === 0}
-              className="px-6 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-40"
+              className="px-6 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors disabled:opacity-40"
             >
               {submitting ? 'Збереження...' : 'Розпочати'}
             </button>

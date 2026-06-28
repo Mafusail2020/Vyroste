@@ -307,7 +307,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
                       <button onClick={() => setStatus(n.id, 'verified')} disabled={acting === n.id}
-                        className="px-4 py-2 bg-forest text-white text-sm font-bold rounded-xl hover:bg-forest-dark transition-colors disabled:opacity-40 flex items-center gap-1.5">
+                        className="px-4 py-2 bg-[#6E9150] text-white text-sm font-bold rounded-xl hover:bg-[#5e7d42] transition-colors disabled:opacity-40 flex items-center gap-1.5">
                         {acting === n.id
                           ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           : '✓'} Верифікувати
@@ -369,7 +369,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
                       <button onClick={() => moderateReview(r.id, 'approved')} disabled={acting === r.id}
-                        className="px-4 py-2 bg-forest text-white text-sm font-bold rounded-xl hover:bg-forest-dark transition-colors disabled:opacity-40 flex items-center gap-1.5">
+                        className="px-4 py-2 bg-[#6E9150] text-white text-sm font-bold rounded-xl hover:bg-[#5e7d42] transition-colors disabled:opacity-40 flex items-center gap-1.5">
                         {acting === r.id
                           ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           : '✓'} Схвалити
@@ -398,7 +398,7 @@ export default function AdminPage() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wide transition-all duration-150
                 ${showForm
                   ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  : 'bg-forest text-white hover:bg-forest-dark hover:scale-[1.02] active:scale-[0.98]'}`}>
+                  : 'bg-[#6E9150] text-white hover:bg-[#5e7d42] hover:scale-[1.02] active:scale-[0.98]'}`}>
               {showForm ? '✕ Скасувати' : '+ Нова стаття'}
             </button>
           </div>
@@ -509,7 +509,7 @@ export default function AdminPage() {
                     Скасувати
                   </button>
                   <button type="submit" disabled={formSaving}
-                    className="px-6 py-2.5 rounded-xl bg-forest text-white font-black text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-50 flex items-center gap-2">
+                    className="px-6 py-2.5 rounded-xl bg-[#6E9150] text-white font-black text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors disabled:opacity-50 flex items-center gap-2">
                     {formSaving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                     {formSaving ? 'Збереження...' : 'Опублікувати'}
                   </button>

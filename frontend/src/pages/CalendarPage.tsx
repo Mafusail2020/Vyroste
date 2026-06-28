@@ -79,7 +79,7 @@ const WEEKDAY_UK = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб']
 // Shared toolbar button styling so every control reads as one family.
 const BTN_BASE   = 'px-3 py-1 text-xs font-semibold border rounded-lg transition-colors'
 const BTN_REST   = 'border-gray-300 text-gray-700 hover:bg-gray-50'
-const BTN_ACTIVE = 'border-forest bg-forest text-white'
+const BTN_ACTIVE = 'border-[#6E9150] bg-[#6E9150] text-white'
 
 const TASK_CFG: Record<TaskType, { label: string; icon: string; bg: string; fg: string }> = {
   seeding:       { label: 'Посів (розсада)',    icon: '🌱', bg: '#FDE68A', fg: '#78350F' },
@@ -792,7 +792,7 @@ export default function CalendarPage() {
         {/* Floating "today" button — appears when current month scrolled away */}
         {showTodayFab && (
           <button onClick={goToToday}
-            className="absolute bottom-5 right-5 z-40 flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-forest text-white text-sm font-bold shadow-lg hover:bg-forest-dark transition-colors">
+            className="absolute bottom-5 right-5 z-40 flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#6E9150] text-white text-sm font-bold shadow-lg hover:bg-[#5e7d42] transition-colors">
             <span>📍</span> Сьогодні
           </button>
         )}
@@ -811,11 +811,11 @@ export default function CalendarPage() {
               <div key={c.id}
                 onClick={() => setActiveId(c.id)}
                 className={`rounded-xl border-2 p-3 cursor-pointer transition-colors ${
-                  c.id === activeId ? 'border-forest bg-forest/5' : 'border-gray-200 bg-white hover:border-gray-300'
+                  c.id === activeId ? 'border-[#6E9150] bg-[#6E9150]/5' : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs ${c.id === activeId ? 'text-forest' : 'text-gray-300'}`}>●</span>
+                  <span className={`text-xs ${c.id === activeId ? 'text-[#6E9150]' : 'text-gray-300'}`}>●</span>
                   {editingId === c.id ? (
                     <>
                       <input
@@ -829,13 +829,13 @@ export default function CalendarPage() {
                       <button
                         onMouseDown={e => { e.preventDefault(); e.stopPropagation(); commitRename() }}
                         title="Зберегти"
-                        className="shrink-0 w-6 h-6 rounded-md bg-forest text-white flex items-center justify-center hover:bg-forest-dark text-sm leading-none"
+                        className="shrink-0 w-6 h-6 rounded-md bg-[#6E9150] text-white flex items-center justify-center hover:bg-[#5e7d42] text-sm leading-none"
                       >
                         ✓
                       </button>
                     </>
                   ) : (
-                    <span className={`flex-1 text-sm font-semibold truncate ${c.id === activeId ? 'text-forest' : 'text-gray-700'}`}>{c.name}</span>
+                    <span className={`flex-1 text-sm font-semibold truncate ${c.id === activeId ? 'text-[#6E9150]' : 'text-gray-700'}`}>{c.name}</span>
                   )}
                 </div>
                 {/* Non-active: static region · count */}
@@ -936,14 +936,14 @@ export default function CalendarPage() {
                   <option value="kviti">🌸 Квіти</option>
                 </select>
                 <div className="flex gap-2">
-                  <button onClick={createCalendar} className="flex-1 text-xs font-bold py-2 rounded-lg bg-forest text-white hover:bg-forest-dark">Створити</button>
+                  <button onClick={createCalendar} className="flex-1 text-xs font-bold py-2 rounded-lg bg-[#6E9150] text-white hover:bg-[#5e7d42]">Створити</button>
                   <button onClick={() => setCreating(false)} className="px-3 text-xs py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">Скасувати</button>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => setCreating(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-forest text-white text-sm font-bold hover:bg-forest-dark transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#6E9150] text-white text-sm font-bold hover:bg-[#5e7d42] transition-colors"
               >
                 <span className="text-base leading-none">+</span> Новий календар
               </button>

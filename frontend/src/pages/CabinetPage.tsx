@@ -183,7 +183,7 @@ export default function CabinetPage() {
                 <button
                   onClick={() => setConfirming(true)}
                   disabled={!dirty || savingMe}
-                  className="px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm hover:bg-forest-dark transition-colors disabled:opacity-40"
+                  className="px-5 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm hover:bg-[#5e7d42] transition-colors disabled:opacity-40"
                 >
                   Зберегти зміни
                 </button>
@@ -193,7 +193,7 @@ export default function CabinetPage() {
                   <button
                     onClick={saveProfile}
                     disabled={savingMe}
-                    className="px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm hover:bg-forest-dark transition-colors disabled:opacity-60"
+                    className="px-5 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm hover:bg-[#5e7d42] transition-colors disabled:opacity-60"
                   >
                     {savingMe ? 'Збереження…' : 'Так'}
                   </button>

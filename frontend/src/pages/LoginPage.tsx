@@ -68,7 +68,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-forest text-white font-bold text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-60"
+              className="w-full py-3 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors disabled:opacity-60"
             >
               {loading ? 'Завантаження...' : 'Увійти'}
             </button>

@@ -64,7 +64,7 @@ export default function DashboardPage() {
           </div>
           <Link
             to="/onboarding"
-            className="ml-4 shrink-0 px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase hover:bg-forest-dark transition-colors"
+            className="ml-4 shrink-0 px-5 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase hover:bg-[#5e7d42] transition-colors"
           >
             Налаштувати
           </Link>

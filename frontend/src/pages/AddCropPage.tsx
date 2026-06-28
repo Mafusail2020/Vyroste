@@ -202,7 +202,7 @@ export default function AddCropPage() {
           </button>
           <button
             onClick={() => navigate('/calendar')}
-            className="px-5 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase hover:bg-forest-dark"
+            className="px-5 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase hover:bg-[#5e7d42]"
           >
             До календаря
           </button>
@@ -316,7 +316,7 @@ export default function AddCropPage() {
                           key={v.id}
                           onClick={() => { setVariety(v); setError('') }}
                           className={`text-sm px-3 py-1.5 rounded-lg border-2 transition-colors ${
-                            sel ? 'border-forest bg-forest text-white'
+                            sel ? 'border-[#6E9150] bg-[#6E9150] text-white'
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-forest/40'
                           }`}
                         >
@@ -423,7 +423,7 @@ export default function AddCropPage() {
             <button
               onClick={handleSave}
               disabled={!variety || saving}
-              className="px-6 py-2.5 rounded-xl bg-forest text-white font-bold text-sm uppercase tracking-wide hover:bg-forest-dark transition-colors disabled:opacity-40"
+              className="px-6 py-2.5 rounded-xl bg-[#6E9150] text-white font-bold text-sm uppercase tracking-wide hover:bg-[#5e7d42] transition-colors disabled:opacity-40"
             >
               {saving ? 'Збереження...' : 'Зберегти в календар'}
             </button>

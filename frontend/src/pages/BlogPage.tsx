@@ -241,7 +241,7 @@ export default function BlogPage() {
                   <button key={cat} onClick={() => setActiveCat(cat)}
                     className={`text-xs font-bold uppercase tracking-wide px-4 py-2 rounded-full transition-all duration-150
                       ${activeCat === cat
-                        ? 'bg-forest text-white shadow-sm scale-[1.03]'
+                        ? 'bg-[#6E9150] text-white shadow-sm scale-[1.03]'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-forest hover:text-forest'}`}>
                     {cat}
                   </button>

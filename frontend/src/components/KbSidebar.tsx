@@ -66,7 +66,7 @@ export default function KbSidebar({
           placeholder="Пошук у базі знань…"
           className="flex-1 min-w-0 px-3 py-2.5 text-sm bg-transparent focus:outline-none"
         />
-        <button type="submit" className="px-3 flex items-center justify-center bg-[#6E8B6E] hover:bg-[#5d795d] transition-colors">
+        <button type="submit" className="px-3 flex items-center justify-center bg-[#6E9150] hover:bg-[#5e7d42] transition-colors">
           <Search className="w-4 h-4 text-white" />
         </button>
       </form>
