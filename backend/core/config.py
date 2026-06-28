@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     wayforpay_merchant_key: str = ""
     wayforpay_merchant_domain: str = "vyroste.ua"
 
+    # Anthropic (AI Агроном) — optional; /diagnose returns 503 if key unset
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-6"
+
     # SendPulse SMTP — optional; GDD alerts skipped silently if not set
     sendpulse_smtp_host: str = "smtp.sendpulse.com"
     sendpulse_smtp_port: int = 587

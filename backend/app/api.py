@@ -11,6 +11,8 @@ from app.payments import router as payments_router
 from app.blog import router as blog_router
 from app.knowledge import router as knowledge_router
 from app.reviews import router as reviews_router
+from app.newsletter import router as newsletter_router
+from app.diagnose import router as diagnose_router
 
 router = APIRouter()
 router.include_router(users_router)
@@ -24,6 +26,8 @@ router.include_router(payments_router)
 router.include_router(blog_router)
 router.include_router(knowledge_router)
 router.include_router(reviews_router)
+router.include_router(newsletter_router)
+router.include_router(diagnose_router)
 
 
 @router.get("/health")
