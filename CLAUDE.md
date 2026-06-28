@@ -195,6 +195,17 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
     CalendarPage toolbar). Uploader (camera capture) + calendar picker → result card (personalized
     region/GDD banner = the data moat made visible, confidence ring, severity badge, step timeline,
     timing kicker, prevention) + scan history. 503 → «AI скоро буде доступний» empty state.
+  - `_garden_context` also injects a live 5-day forecast (`weather.fetch_forecast`, Open-Meteo) +
+    a computed dry/rain spray-window; the prompt forces rain-aware treatment timing.
+  - **Phase 2 — conversational agent**: Migration `019_agronom_chat.sql` (`agronom_chats` +
+    `agronom_messages`, owner RLS). `app/agronom_chat.py` runs Claude's native tool-use loop (cap 5
+    iters, no LangGraph) with 4 tools over the user's data: `get_garden_context` (reuses
+    `_garden_context`), `search_knowledge` (KB ILIKE + `_collect_text` snippets), `find_nursery`
+    (verified nurseries by region/tag), `get_calendar` (`compute_windows_for`). Endpoints (all
+    key-gated 503, owner-scoped): `POST/GET /api/agronom/chats`, `GET/DELETE .../chats/{id}`,
+    `POST .../chats/{id}/message`. Persisted history; chat can be seeded from a scan (`scan_id` →
+    `_scan_context`). Frontend: `components/AgronomChat.tsx` floating widget on `/agronom` (chat +
+    past-chats + tool-trace line); diagnosis card has «💬 Запитати про цей діагноз» (opens seeded).
 - [x] Slice 21 — Bug fixes + SEO / premium-expiry / newsletter polish
   - Migration: `backend/migrations/019_newsletter_optout.sql` (`user_profiles.newsletter_opt_out`).
   - **Premium expiry**: nightly `expire_premium` scheduler job revokes `is_premium` once

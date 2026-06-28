@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import api from '../lib/api'
+import AgronomChat from '../components/AgronomChat'
 
 interface Scan {
   id: string
@@ -112,6 +113,7 @@ export default function AgronomPage() {
   const [unavailable, setUnavailable] = useState(false)
   const [result, setResult] = useState<Scan | null>(null)
   const [history, setHistory] = useState<Scan[]>([])
+  const [seedScanId, setSeedScanId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -162,7 +164,7 @@ export default function AgronomPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-forest uppercase mb-2">AI Агроном 🔬</h1>
+        <h1 className="text-3xl font-black text-forest uppercase mb-2">AI Агроном</h1>
         <p className="text-gray-500 max-w-xl">
           Сфотографуйте хвору рослину — штучний інтелект визначить проблему та дасть поради,
           підлаштовані під ваш регіон, погоду й культури.
@@ -214,7 +216,17 @@ export default function AgronomPage() {
             </div>
           </div>
 
-          {result && <ResultCard scan={result} />}
+          {result && (
+            <div className="space-y-3">
+              <ResultCard scan={result} />
+              <button
+                onClick={() => setSeedScanId(result.id)}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border-2 border-forest/30 text-forest font-bold text-sm hover:bg-forest/5 transition-colors"
+              >
+                💬 Запитати про цей діагноз
+              </button>
+            </div>
+          )}
 
           {/* History */}
           {history.length > 0 && (
@@ -240,6 +252,8 @@ export default function AgronomPage() {
           )}
         </>
       )}
+
+      <AgronomChat calendarId={calId || undefined} seedScanId={seedScanId} onSeedHandled={() => setSeedScanId(null)} />
     </div>
   )
 }
