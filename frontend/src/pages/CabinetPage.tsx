@@ -9,6 +9,7 @@ interface Profile {
   region_id: string | null
   plot_type: string | null
   is_premium: boolean
+  premium_until: string | null
   display_name: string | null
   avatar_url: string | null
 }
@@ -219,7 +220,9 @@ export default function CabinetPage() {
             <div className="flex items-center justify-between py-2 border-t border-gray-50">
               <span className="text-sm text-gray-500">Тариф</span>
               {profile?.is_premium ? (
-                <span className="text-sm font-bold text-forest">⭐ Преміум</span>
+                <span className="text-sm font-bold text-forest">
+                  ⭐ Преміум{profile.premium_until ? ` · до ${new Date(profile.premium_until).toLocaleDateString('uk-UA')}` : ''}
+                </span>
               ) : (
                 <Link to="/pricing" className="text-sm font-semibold text-forest hover:underline">Безкоштовний · Отримати Преміум →</Link>
               )}

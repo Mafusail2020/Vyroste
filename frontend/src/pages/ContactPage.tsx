@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { toast } from 'react-hot-toast'
+import Seo from '../components/Seo'
 
 /* ─── Data ───────────────────────────────────────────────────────────────── */
 
@@ -95,6 +96,7 @@ export default function ContactPage() {
 
   return (
     <div className="bg-cream min-h-screen">
+      <Seo title="Контакти" description="Звʼяжіться з командою Виросте — підтримка, співпраця та зворотний звʼязок." path="/contact" />
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-16 pb-14">

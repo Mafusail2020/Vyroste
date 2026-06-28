@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.admin import require_admin
-from app.auth import get_current_user
+from app.auth import get_current_user, get_current_user_optional
 from app.deps import get_supabase
 
 router = APIRouter()
@@ -35,11 +35,14 @@ def _is_admin(sb, user_id: str) -> bool:
 
 
 @router.get("/nurseries/{nursery_id}/reviews")
-async def list_reviews(nursery_id: str, current_user: dict = Depends(get_current_user)):
-    """Approved reviews for a nursery + the caller's own vote / delete rights."""
+async def list_reviews(
+    nursery_id: str, current_user: dict | None = Depends(get_current_user_optional)
+):
+    """Approved reviews for a nursery + the caller's own vote / delete rights.
+    Public: guests get the list with my_vote=0 and can_delete=False."""
     sb = get_supabase()
-    uid = current_user["id"]
-    admin = _is_admin(sb, uid)
+    uid = current_user["id"] if current_user else None
+    admin = bool(uid) and _is_admin(sb, uid)
     res = (
         sb.table("nursery_reviews")
         .select("id, user_id, author_name, avatar_url, rating, text, likes, dislikes, created_at")
@@ -50,17 +53,17 @@ async def list_reviews(nursery_id: str, current_user: dict = Depends(get_current
     )
     reviews = res.data or []
     for r in reviews:
-        r["can_delete"] = admin or r.get("user_id") == uid
+        r["can_delete"] = admin or (uid is not None and r.get("user_id") == uid)
         r.pop("user_id", None)   # don't leak author ids
 
-    # Caller's votes on these reviews.
+    # Caller's votes on these reviews (only for signed-in users).
     ids = [r["id"] for r in reviews]
     my_votes: dict[str, int] = {}
-    if ids:
+    if uid and ids:
         v = (
             sb.table("nursery_review_votes")
             .select("review_id, vote")
-            .eq("user_id", current_user["id"])
+            .eq("user_id", uid)
             .in_("review_id", ids)
             .execute()
         )

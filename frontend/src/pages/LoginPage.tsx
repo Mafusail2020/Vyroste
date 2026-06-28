@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
@@ -8,6 +8,8 @@ import Logo from '../components/Logo'
 export default function LoginPage() {
   const { signIn } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,11 +19,15 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signIn(email, password)
-      try {
-        const { data } = await api.get<{ region_id: string | null }>('/api/users/me')
-        navigate(data.region_id ? '/dashboard' : '/onboarding')
-      } catch {
-        navigate('/dashboard')
+      if (from) {
+        navigate(from)
+      } else {
+        try {
+          const { data } = await api.get<{ region_id: string | null }>('/api/users/me')
+          navigate(data.region_id ? '/dashboard' : '/onboarding')
+        } catch {
+          navigate('/dashboard')
+        }
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Помилка входу')

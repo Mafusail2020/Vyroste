@@ -1,9 +1,27 @@
 from datetime import date
 from fastapi import APIRouter, Depends
 from app.auth import get_current_user
+from app.calendar import _parse_frost_date
 from app.deps import get_supabase
 
 router = APIRouter()
+
+
+def _season_start_for(sb, region_id: str) -> str:
+    """GDD accumulation starts at the region's average last-frost date
+    (climate_zones.avg_last_frost_date, 'MM-DD'); falls back to April 1."""
+    year = date.today().year
+    try:
+        res = (
+            sb.table("climate_zones").select("avg_last_frost_date")
+            .eq("id", region_id).maybe_single().execute()
+        )
+        frost = (res.data or {}).get("avg_last_frost_date")
+        if frost:
+            return _parse_frost_date(frost, year).isoformat()
+    except Exception:
+        pass
+    return f"{year}-04-01"
 
 
 def _resolve_calendar(sb, user_id: str, calendar_id: str | None) -> dict | None:
@@ -32,7 +50,7 @@ async def get_my_gdd(
     if not region_id or not variety_ids:
         return {"region_id": region_id, "season_start": None, "crops": []}
 
-    season_start = f"{date.today().year}-04-01"
+    season_start = _season_start_for(sb, region_id)
 
     rows = (
         sb.table("gdd_accumulation")

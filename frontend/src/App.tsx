@@ -24,6 +24,7 @@ import AdminKnowledgePage from './pages/AdminKnowledgePage'
 import KnowledgePage from './pages/KnowledgePage'
 import ArticlePage from './pages/ArticlePage'
 import CarePopoverDemo from './pages/CarePopoverDemo'
+import UnsubscribePage from './pages/UnsubscribePage'
 import AgronomPage from './pages/AgronomPage'
 
 export default function App() {
@@ -52,6 +53,8 @@ export default function App() {
           <Route path="/blog/:id" element={<BlogPostPage />} />
           <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/knowledge/:slug" element={<ArticlePage />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/care-popover-demo" element={<CarePopoverDemo />} />
 
           <Route element={<ProtectedRoute />}>
@@ -60,7 +63,6 @@ export default function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/agronom" element={<AgronomPage />} />
             <Route path="/crops/add" element={<AddCropPage />} />
-            <Route path="/map" element={<MapPage />} />
             <Route path="/nurseries/register" element={<NurseryRegisterPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/admin/knowledge" element={<AdminKnowledgePage />} />

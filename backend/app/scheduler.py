@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+from app.calendar import _parse_frost_date
 from app.deps import get_supabase
 from app.weather import fetch_yesterday_temps
 
@@ -14,7 +15,6 @@ def _send_gdd_alerts() -> None:
 
     sb = get_supabase()
     year = date.today().year
-    season_start = f"{year}-04-01"
 
     # Premium user ids.
     premium_res = (
@@ -55,19 +55,42 @@ def _send_gdd_alerts() -> None:
     )
     variety_map: dict[str, dict] = {v["id"]: v for v in (var_res.data or [])}
 
-    # Weather per region since season start.
+    # Per-region season start = the region's avg last-frost date (fallback April 1).
     all_region_ids = list({c["region_id"] for c in calendars if c.get("region_id")})
+    region_season: dict[str, str] = {}
+    try:
+        cz = (
+            sb.table("climate_zones").select("id,avg_last_frost_date")
+            .in_("id", all_region_ids).execute()
+        )
+        for z in (cz.data or []):
+            frost = z.get("avg_last_frost_date")
+            try:
+                region_season[z["id"]] = (
+                    _parse_frost_date(frost, year).isoformat() if frost else f"{year}-04-01"
+                )
+            except Exception:
+                region_season[z["id"]] = f"{year}-04-01"
+    except Exception:
+        pass
+    for rid in all_region_ids:
+        region_season.setdefault(rid, f"{year}-04-01")
+
+    # Fetch from the earliest season across regions, then filter per region below.
+    earliest = min(region_season.values()) if region_season else f"{year}-04-01"
     gdd_res = (
         sb.table("gdd_accumulation")
-        .select("region_id,tmax,tmin")
+        .select("region_id,tmax,tmin,date")
         .in_("region_id", all_region_ids)
-        .gte("date", season_start)
+        .gte("date", earliest)
         .lte("date", date.today().isoformat())
         .execute()
     )
     region_weather: dict[str, list[dict]] = {}
     for row in (gdd_res.data or []):
-        region_weather.setdefault(row["region_id"], []).append(row)
+        rid = row["region_id"]
+        if row.get("date") and row["date"] >= region_season.get(rid, earliest):
+            region_weather.setdefault(rid, []).append(row)
 
     # Already-sent alerts this season (user_id, variety_id).
     sent_res = (
@@ -162,5 +185,55 @@ def run_gdd_job() -> None:
         pass
 
 
+def run_newsletter_job() -> None:
+    """Hourly tick: send the weekly newsletter when the configured day/hour (UTC)
+    matches and it hasn't already gone out today. Schedule is admin-editable, so
+    we poll the settings row rather than hard-wiring a cron day/time."""
+    from datetime import datetime, timezone
+    from app.newsletter import send_to_audience
+
+    sb = get_supabase()
+    res = sb.table("newsletter").select("*").eq("id", 1).maybe_single().execute()
+    row = res.data if res else None
+    if not row or not row.get("enabled"):
+        return
+
+    now = datetime.now(timezone.utc)
+    if now.weekday() != int(row.get("send_dow", 0)) or now.hour != int(row.get("send_hour", 9)):
+        return
+
+    last = row.get("last_sent_at")
+    if last:
+        try:
+            last_dt = datetime.fromisoformat(str(last).replace("Z", "+00:00"))
+            if (now - last_dt).total_seconds() < 23 * 3600:
+                return   # already sent within the last day
+        except Exception:
+            pass
+
+    try:
+        send_to_audience(sb, row)
+        sb.table("newsletter").update({"last_sent_at": now.isoformat()}).eq("id", 1).execute()
+    except Exception:
+        pass
+
+
+def run_expire_premium_job() -> None:
+    """Nightly: revoke Premium from users whose paid term has lapsed.
+    Payments set premium_until on purchase; nothing else reads it, so without
+    this job is_premium would stay true forever."""
+    from datetime import datetime, timezone
+
+    sb = get_supabase()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        sb.table("user_profiles").update({"is_premium": False}) \
+            .eq("is_premium", True).lt("premium_until", now_iso).execute()
+    except Exception:
+        pass
+
+
 scheduler = BackgroundScheduler(timezone="UTC")
 scheduler.add_job(run_gdd_job, "cron", hour=8, minute=0, id="gdd_daily", replace_existing=True)
+scheduler.add_job(run_newsletter_job, "cron", minute=5, id="newsletter_weekly", replace_existing=True)
+scheduler.add_job(run_expire_premium_job, "cron", hour=3, minute=0, id="expire_premium", replace_existing=True)

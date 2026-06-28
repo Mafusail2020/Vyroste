@@ -6,6 +6,7 @@ import { renderArticleHtml, extractToc, slugifyHeading } from '../lib/tiptap'
 import KbSidebar, { type KbCategory } from '../components/KbSidebar'
 import ArticleToc from '../components/ArticleToc'
 import BookmarkButton from '../components/BookmarkButton'
+import Seo from '../components/Seo'
 
 interface RelatedArticle {
   id: string
@@ -89,6 +90,7 @@ export default function ArticlePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
+      <Seo title={article.title} description={article.excerpt} image={article.cover_image} type="article" path={`/knowledge/${article.slug}`} />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-10">
 
         {/* ── Main: article ── */}

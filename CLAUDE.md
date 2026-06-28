@@ -195,3 +195,22 @@ Scopes: `ui`, `db`, `api`, `auth`, `calendar`, `map`, `infra`
     CalendarPage toolbar). Uploader (camera capture) + calendar picker → result card (personalized
     region/GDD banner = the data moat made visible, confidence ring, severity badge, step timeline,
     timing kicker, prevention) + scan history. 503 → «AI скоро буде доступний» empty state.
+- [x] Slice 21 — Bug fixes + SEO / premium-expiry / newsletter polish
+  - Migration: `backend/migrations/019_newsletter_optout.sql` (`user_profiles.newsletter_opt_out`).
+  - **Premium expiry**: nightly `expire_premium` scheduler job revokes `is_premium` once
+    `premium_until` lapses (was never read before); Cabinet shows «Преміум · до DD.MM.YYYY».
+  - **Mobile nav**: `Layout.tsx` hamburger + drawer (was `hidden md:flex`, no menu on phones).
+  - **Public map**: `/map` moved out of `ProtectedRoute`; `reviews.list_reviews` now uses
+    `get_current_user_optional` (guests read approved reviews; vote/submit prompt login).
+  - **Newsletter polish**: background-thread send (non-blocking), paginated recipients,
+    per-recipient HMAC unsubscribe link + public `GET /api/newsletter/unsubscribe` + `/unsubscribe`
+    page, opt-out filter, `POST /api/newsletter/test` (+ admin «Тест собі» button).
+  - **GDD season**: anchored to region `avg_last_frost_date` (was hard-coded April 1) in
+    `gdd._season_start_for` + scheduler per-region map (reuses `calendar._parse_frost_date`).
+  - **Login redirect**: `ProtectedRoute` passes `state.from`; `LoginPage` returns there post-login.
+  - **SEO**: `index.html` lang=uk + default meta/OG; `components/Seo.tsx` (React 19 native head
+    tags) on all public pages; `public/robots.txt`; build-time prerender of public + dynamic
+    blog/KB routes via `scripts/prerender.mjs` (puppeteer devDep) → static HTML + `sitemap.xml`.
+    `build` script now ends with `node scripts/prerender.mjs` (self-skips if puppeteer absent).
+  - Manual: run migration `019`; `npm install` (puppeteer); set `VITE_SITE_URL` + `VITE_API_URL`
+    at build; add a 1200×630 `frontend/public/og-default.png`.

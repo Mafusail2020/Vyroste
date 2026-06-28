@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import api from '../lib/api'
 import KbSidebar, { type KbCategory as SidebarCategory } from '../components/KbSidebar'
+import Seo from '../components/Seo'
 import arrowCurveDown from '../assets/arrow_curve_down.png'
 
 interface Category {
@@ -221,6 +222,7 @@ export default function KnowledgePage() {
 
   return (
     <div className="bg-cream min-h-screen">
+      <Seo title="База знань" description="Гіди по вирощуванню, поради агрономів та відповіді на найпоширеніші питання садівників." path="/knowledge" />
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-12">
 

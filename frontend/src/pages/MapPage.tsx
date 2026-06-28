@@ -6,6 +6,7 @@ import { Star, ChevronRight, Navigation } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../lib/api'
 import NurseryDetailOverlay from '../components/NurseryDetailOverlay'
+import Seo from '../components/Seo'
 
 function copyPhone(phone: string) {
   navigator.clipboard?.writeText(phone).then(
@@ -219,6 +220,7 @@ export default function MapPage() {
 
   return (
     <div className="flex" style={{ height: 'calc(100vh - 6rem)' }}>
+      <Seo title="Мапа розсадників" description="Перевірені розсадники по всій Україні: контакти, асортимент, відгуки та маршрут до них." path="/map" />
       <style>{MAP_KEYFRAMES}</style>
 
       {/* ── Sidebar ───────────────────────────────────────────────────── */}

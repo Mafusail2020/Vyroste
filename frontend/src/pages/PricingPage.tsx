@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../lib/api'
+import Seo from '../components/Seo'
 
 const FREE_FEATURES = [
   '5 культур у календарі',
@@ -53,6 +54,7 @@ export default function PricingPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
+      <Seo title="Тарифи" description="Виросте Преміум: персональні сповіщення про збір врожаю, необмежені культури та більше. Почніть безкоштовно." path="/pricing" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-black text-forest uppercase mb-3">Оберіть план</h1>
         <p className="text-gray-500">Почніть безкоштовно — оновіться коли будете готові</p>

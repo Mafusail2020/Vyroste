@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
+import Seo from '../components/Seo'
 import {
   Calendar, MapPin, BookOpen, Newspaper,
   ArrowRight, Sparkles, Check, ChevronRight,
@@ -198,11 +199,10 @@ function Tagline() {
 const FEATURE_CARDS = [
   {
     icon: Calendar,
-    gradientFrom: '#EFF6FF',
-    gradientTo: '#E0F2FE',
-    borderColor: '#BAE6FD',
-    iconBg: '#DBEAFE',
-    iconColor: '#2563EB',
+    cardBg: 'bg-blue-50/80',
+    iconChip: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+    btn: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
     title: 'Регіональний календар',
     desc: 'Точні дати посіву, пересадки та збору для вашої області. Овочі, квіти + місячний календар.',
     to: '/calendar',
@@ -210,11 +210,10 @@ const FEATURE_CARDS = [
   },
   {
     icon: MapPin,
-    gradientFrom: '#F0FDF4',
-    gradientTo: '#DCFCE7',
-    borderColor: '#BBF7D0',
-    iconBg: '#D1FAE5',
-    iconColor: '#059669',
+    cardBg: 'bg-green-50/80',
+    iconChip: 'bg-green-100',
+    iconColor: 'text-green-600',
+    btn: 'bg-green-100 text-green-700 hover:bg-green-200',
     title: 'Мапа розсадників',
     desc: 'Перевірені розсадники по всій Україні з контактами, асортиментом та маршрутом.',
     to: '/map',
@@ -222,11 +221,10 @@ const FEATURE_CARDS = [
   },
   {
     icon: BookOpen,
-    gradientFrom: '#FAF5FF',
-    gradientTo: '#F3E8FF',
-    borderColor: '#E9D5FF',
-    iconBg: '#EDE9FE',
-    iconColor: '#7C3AED',
+    cardBg: 'bg-purple-50/80',
+    iconChip: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    btn: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
     title: 'База знань',
     desc: 'Гіди по вирощуванню, поради агрономів та відповіді на найпоширеніші питання.',
     to: '/knowledge',
@@ -234,11 +232,10 @@ const FEATURE_CARDS = [
   },
   {
     icon: Newspaper,
-    gradientFrom: '#FFFBEB',
-    gradientTo: '#FEF3C7',
-    borderColor: '#FDE68A',
-    iconBg: '#FEF3C7',
-    iconColor: '#D97706',
+    cardBg: 'bg-amber-50/80',
+    iconChip: 'bg-amber-100',
+    iconColor: 'text-amber-600',
+    btn: 'bg-amber-100 text-amber-700 hover:bg-amber-200',
     title: 'Блог',
     desc: 'Статті про місячні календарі, GDD-метод, мульчування та сезонні поради від практиків.',
     to: '/blog',
@@ -249,36 +246,25 @@ const FEATURE_CARDS = [
 function FeatureCards() {
   return (
     <section className="bg-cream pb-28">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {FEATURE_CARDS.map((card, i) => {
           const Icon = card.icon
           return (
             <Anim key={card.title} delay={i * 90} className="h-full">
-              <div
-                className="group rounded-3xl p-4 flex flex-col h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
-                style={{
-                  background: `linear-gradient(135deg, ${card.gradientFrom}, ${card.gradientTo})`,
-                  border: `1.5px solid ${card.borderColor}`,
-                }}
-              >
+              <div className={`group ${card.cardBg} rounded-3xl p-4 flex flex-col h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-300`}>
                 <div className="px-2 pt-2 pb-4">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm"
-                    style={{ background: card.iconBg }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: card.iconColor }} />
+                  <div className={`w-12 h-12 ${card.iconChip} rounded-2xl flex items-center justify-center shadow-sm`}>
+                    <Icon className={`w-5 h-5 ${card.iconColor}`} />
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 flex flex-col flex-1 shadow-sm">
-                  <h3 className="font-black text-gray-900 text-xl mb-3 leading-tight">
+                  <h3 className="font-black text-navy text-xl mb-3 leading-tight">
                     {card.title}
                   </h3>
-                  <div className="flex-1" />
-                  <p className="text-gray-500 text-sm leading-relaxed mb-6">{card.desc}</p>
+                  <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-1">{card.desc}</p>
                   <Link
                     to={card.to}
-                    className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-lg self-start transition-all duration-200 hover:scale-[1.03] hover:brightness-95"
-                    style={{ background: card.gradientTo, color: card.iconColor }}
+                    className={`inline-flex items-center justify-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl ${card.btn} transition-all duration-200`}
                   >
                     {card.cta}
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -644,6 +630,7 @@ function Footer() {
 export default function HomePage() {
   return (
     <>
+      <Seo title="" description="Виросте — персональний садовий помічник: регіональний календар посіву, мапа перевірених розсадників та база знань для українських садівників." path="/" />
       <Hero />
       <Tagline />
       <FeatureCards />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import {
   Star, MapPin, Phone, Globe, ChevronLeft, ChevronRight,
   ChevronDown, ThumbsUp, ThumbsDown, ArrowLeft,
@@ -97,11 +98,14 @@ export default function NurseryDetailOverlay({ nursery, onClose }: {
     api.get<{ count: number; avg: number; reviews: Review[] }>(`/api/nurseries/${nursery.id}/reviews`)
       .then(r => { setReviews(r.data.reviews); setCount(r.data.count); setAvg(r.data.avg) })
       .catch(() => {})
-    api.get<{ display_name: string | null; avatar_url: string | null }>('/api/users/me')
-      .then(r => setProfile(r.data)).catch(() => {})
-  }, [nursery.id])
+    if (user) {
+      api.get<{ display_name: string | null; avatar_url: string | null }>('/api/users/me')
+        .then(r => setProfile(r.data)).catch(() => {})
+    }
+  }, [nursery.id, user])
 
   async function vote(reviewId: string, dir: 'up' | 'down') {
+    if (!user) { toast('Увійдіть, щоб голосувати'); return }
     const r = reviews.find(x => x.id === reviewId)
     if (!r) return
     const want = dir === 'up' ? 1 : -1

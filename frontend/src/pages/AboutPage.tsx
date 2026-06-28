@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Heart, Play } from 'lucide-react'
+import Seo from '../components/Seo'
 
 // ─── Animation ────────────────────────────────────────────────────────────────
 function useInView(threshold = 0.1) {
@@ -71,7 +72,7 @@ const CHANNELS = [
 const BLOG_TOPICS = [
   { emoji: '🔨', text: 'Складнощі та радощі ремонту старої хати своїми силами.' },
   { emoji: '🌱', text: 'Городній дзен: від висадки розсади і догляду за артишоками та лавандою до боротьби з бур\'янами.' },
-  { emoji: '🏚️', text: 'Хутірський побут, облаштування подвір\'я та створення затишку з мінімальним бюджетом.' },
+  { emoji: '🏠', text: 'Хутірський побут, облаштування подвір\'я та створення затишку з мінімальним бюджетом.' },
 ]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -90,6 +91,7 @@ export default function AboutPage() {
 
   return (
     <div className="bg-cream min-h-screen">
+      <Seo title="Про нас" description="Виросте — українська платформа для садівників: наша місія, команда та підхід до точного календаря посіву." path="/about" />
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden pt-20 pb-24">
