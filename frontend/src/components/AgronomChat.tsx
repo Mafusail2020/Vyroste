@@ -191,11 +191,11 @@ export default function AgronomChat({ open, onClose, calendarId, seedScanId, see
 
   return (
     <>
-      {/* History drawer — slides in to the LEFT of the chat panel.
-          Hidden via opacity (it sits far from the right edge, so a transform
-          alone can't push it off-screen). */}
+      {/* History drawer — sits behind the chat panel (lower z) at its left edge
+          and slides out from under it (translate), like the KB cards. Opacity
+          only gates the panel-closed case so it can't linger orphaned. */}
       <div
-        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-all duration-300 ease-out ${open && showHistory ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}
+        className={`fixed top-24 bottom-0 z-30 w-[280px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-all duration-300 ease-out ${open ? 'opacity-100' : 'opacity-0'} ${open && showHistory ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'}`}
         style={{ right: 'clamp(440px, 50vw, 760px)' }}
       >
         <div className="flex items-center justify-between px-4 h-12 border-b border-gray-100 shrink-0">
