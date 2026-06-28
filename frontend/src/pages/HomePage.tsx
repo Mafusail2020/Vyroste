@@ -117,7 +117,7 @@ function Hero() {
           <div className="flex flex-wrap gap-3" style={fadeUp(440)}>
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 bg-forest text-white font-bold text-base px-7 py-3.5 rounded-lg hover:bg-forest-dark transition-all duration-300 hover:scale-[1.03] shadow-lg"
+              className="inline-flex items-center gap-2 bg-[#6E9150] text-white font-bold text-base px-7 py-3.5 rounded-lg hover:bg-[#5e7d42] transition-all duration-300 hover:scale-[1.03] shadow-lg"
               style={{ boxShadow: '0 8px 24px rgba(43,97,23,0.25)' }}
             >
               Зареєструватись безкоштовно
@@ -596,8 +596,8 @@ function Footer() {
   return (
     <footer className="bg-cream border-t border-gray-200 pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-14">
-          <div>
+        <div className="flex flex-col md:flex-row gap-12 md:gap-28 mb-14">
+          <div className="md:shrink-0">
             <Logo size="md" showSubtitle={true} />
             <div className="mt-5 mb-4 w-28 h-px bg-gray-300" />
             <p className="text-gray-400 text-xs mb-4 uppercase tracking-wider font-semibold">Ми в соц мережах</p>
@@ -616,18 +616,20 @@ function Footer() {
               </a>
             </div>
           </div>
-          {FOOTER_NAV.map((col) => (
-            <div key={col.heading}>
-              <p className="font-black text-gray-900 text-xs uppercase tracking-widest mb-4">{col.heading}</p>
-              <ul className="space-y-2.5">
-                {col.links.map(({ label, to }) => (
-                  <li key={label}>
-                    <Link to={to} className="text-gray-500 text-sm hover:text-forest transition-colors">{label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 flex-1">
+            {FOOTER_NAV.map((col) => (
+              <div key={col.heading}>
+                <p className="font-black text-gray-900 text-xs uppercase tracking-widest mb-4">{col.heading}</p>
+                <ul className="space-y-2.5">
+                  {col.links.map(({ label, to }) => (
+                    <li key={label}>
+                      <Link to={to} className="text-gray-500 text-sm hover:text-forest transition-colors">{label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400">© {new Date().getFullYear()} Виросте. Всі права захищені.</p>
