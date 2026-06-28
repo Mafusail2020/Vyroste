@@ -48,9 +48,13 @@ export default function KnowledgePage() {
   const [articles, setArticles] = useState<ArticleCard[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [shown, setShown] = useState(false)   // stagger trigger for landing cards
 
   useEffect(() => {
-    api.get<Category[]>('/api/knowledge/categories').then(r => setCategories(r.data)).catch(() => {})
+    api.get<Category[]>('/api/knowledge/categories').then(r => {
+      setCategories(r.data)
+      requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)))
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -111,7 +115,12 @@ export default function KnowledgePage() {
               ? Math.min(100, Math.round((c.read_count / c.article_count) * 100))
               : 0
             return (
-              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md transition-shadow">
+              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-5 flex flex-col hover:shadow-md"
+                style={{
+                  opacity: shown ? 1 : 0,
+                  transform: shown ? 'none' : 'translateX(-40px)',
+                  transition: `opacity 0.5s ease-out ${i * 90}ms, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${i * 90}ms, box-shadow 0.3s ease`,
+                }}>
                 {/* Header: title + counter on a row, split rule fully below */}
                 <div className="mb-3">
                   <div className="flex items-start justify-between gap-3 mb-2.5">
