@@ -248,15 +248,9 @@ function FeatureCards() {
     <section className="bg-cream pb-28">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {FEATURE_CARDS.map((card, i) => {
-          const Icon = card.icon
           return (
             <Anim key={card.title} delay={i * 90} className="h-full">
               <div className={`group ${card.cardBg} rounded-3xl p-4 flex flex-col h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-300`}>
-                <div className="px-2 pt-2 pb-4">
-                  <div className={`w-12 h-12 ${card.iconChip} rounded-2xl flex items-center justify-center shadow-sm`}>
-                    <Icon className={`w-5 h-5 ${card.iconColor}`} />
-                  </div>
-                </div>
                 <div className="bg-white rounded-2xl p-6 flex flex-col flex-1 shadow-sm">
                   <h3 className="font-black text-navy text-xl mb-3 leading-tight">
                     {card.title}
