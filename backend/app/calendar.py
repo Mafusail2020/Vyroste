@@ -26,7 +26,6 @@ from app.schemas import (
 router = APIRouter()
 
 HARVEST_WINDOW_DAYS = 30
-FREE_TIER_LIMIT = 5
 
 # Growing-method string constants (mirror app.models.GrowingMethod values).
 SEEDLING = "seedling"
