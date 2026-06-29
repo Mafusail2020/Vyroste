@@ -17,7 +17,7 @@ _CURRENCY      = "UAH"
 # Subscription plans. Duration is re-derived from the amount in the webhook.
 _PLANS = {
     "monthly": {"amount": 100.00, "product": "Виросте Преміум — 1 місяць", "days": 30},
-    "yearly":  {"amount": 399.00, "product": "Виросте Преміум — 1 рік",    "days": 365},
+    "yearly":  {"amount": 960.00, "product": "Виросте Преміум — 1 рік",    "days": 365},
 }
 
 

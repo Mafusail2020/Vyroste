@@ -69,7 +69,7 @@ export default function PricingPage() {
                 period === p ? 'bg-white text-forest shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}>
               {p === 'monthly' ? 'Щомісячно' : 'Щорічно'}
-              {p === 'yearly' && <span className="ml-1.5 text-[10px] font-black text-forest bg-card-green rounded-full px-1.5 py-0.5">−67%</span>}
+              {p === 'yearly' && <span className="ml-1.5 text-[10px] font-black text-forest bg-card-green rounded-full px-1.5 py-0.5">−20%</span>}
             </button>
           ))}
         </div>
@@ -107,11 +107,11 @@ export default function PricingPage() {
           <div className="mb-6">
             <p className="text-xs font-bold text-white/60 uppercase tracking-wide mb-1">Преміум ⭐</p>
             <div className="flex items-end gap-1">
-              <span className="text-4xl font-black text-white">{period === 'monthly' ? 100 : 399}</span>
+              <span className="text-4xl font-black text-white">{period === 'monthly' ? 100 : 960}</span>
               <span className="text-white/60 mb-1">{period === 'monthly' ? 'грн/місяць' : 'грн/рік'}</span>
             </div>
             <p className="text-white/50 text-xs mt-1">
-              {period === 'monthly' ? 'Гнучко — скасуйте будь-коли' : '≈ 33 грн/місяць · економія 801 грн на рік'}
+              {period === 'monthly' ? 'Гнучко — скасуйте будь-коли' : '≈ 80 грн/місяць · економія 240 грн на рік'}
             </p>
           </div>
           <ul className="space-y-3 mb-8">
