@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.auth import get_current_user
-from app.calendar import FREE_TIER_LIMIT, compute_windows_for
+from app.calendar import compute_windows_for
 from app.deps import get_supabase
 
 router = APIRouter(prefix="/calendars")
@@ -172,10 +172,4 @@ async def calendar_windows(calendar_id: str, current_user: dict = Depends(get_cu
     cal = _own_calendar(sb, calendar_id, current_user["id"])
 
     variety_ids = cal.get("selected_varieties") or []
-    profile = (
-        sb.table("user_profiles").select("is_premium").eq("id", current_user["id"]).maybe_single().execute()
-    )
-    if not (profile.data or {}).get("is_premium"):
-        variety_ids = variety_ids[:FREE_TIER_LIMIT]
-
     return compute_windows_for(sb, cal.get("region_id"), variety_ids)
